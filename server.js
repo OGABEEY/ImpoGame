@@ -26,7 +26,7 @@ const VOTE_DURATION_MS = 30000;
 const VOTE_UNLOCK_DELAY_MS = 30000;
 const STATS_FILE = path.join(__dirname, 'stats.json');
 
-// ==================== STATISTIKA (fayl orqali saqlanadi) ====================
+// ==================== STATISTIKA ====================
 let statsStore = new Map();
 try {
     const raw = fs.readFileSync(STATS_FILE, 'utf8');
@@ -120,8 +120,19 @@ function endGame(roomId, winner, message) {
     registerGameResult(winningClientIds, true);
     registerGameResult(losingClientIds, false);
 
+    // O'yin tugagach xonani o'chirmay, qayta lobby holatiga keltiramiz
+    room.started = false;
+    room.word = null;
+    room.imposterId = null;
+    room.voting = null;
+    room.players.forEach(p => { 
+        p.isMuted = false; 
+        p.isReady = false; 
+        p.isImposter = false; 
+    });
+
     io.to(roomId).emit('gameOver', { winner, message });
-    rooms.delete(roomId);
+    broadcastPlayers(roomId);
 }
 
 function resetRoomToLobby(roomId, reasonMessage) {
@@ -314,7 +325,6 @@ io.on('connection', (socket) => {
         if (!room || !room.started) return;
         const player = room.players.get(socket.id);
         
-        // Mutelangan (chiqarilgan) o'yinchi ovoz berishni boshlay olmaydi
         if (!player || player.isMuted) { 
             socket.emit('errorMsg', "O'yindan chiqarilgansiz, ovoz berishni boshlay olmaysiz!"); 
             return; 
@@ -337,13 +347,11 @@ io.on('connection', (socket) => {
         const voter = room.players.get(socket.id);
         const target = room.players.get(targetId);
 
-        // Ovoz berayotgan yoki maqsad o'yinchi mutelangan bo'lsa ovoz qabul qilinmaydi
         if (!voter || voter.isMuted || !target || target.isMuted) return;
         if (targetId === socket.id) return;
 
         room.voting.votes.set(socket.id, targetId);
 
-        // Faqat faol (mutelanmagan) o'yinchilar soniga qarab ovozlarni tekshirish
         const activePlayersCount = Array.from(room.players.values()).filter(p => !p.isMuted).length;
 
         if (room.voting.votes.size >= activePlayersCount) {

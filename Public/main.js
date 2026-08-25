@@ -192,6 +192,7 @@ socket.on('gameStarted', ({ role, word }) => {
 
   document.getElementById('messageInput').disabled = false;
   document.getElementById('sendMessageBtn').disabled = false;
+  document.getElementById('messageInput').placeholder = "Xabaringizni yozing...";
 });
 
 function startVoteCooldownUI(seconds) {
@@ -299,13 +300,16 @@ socket.on('gameOver', ({ winner, message }) => {
   document.getElementById('gameOverModal').classList.add('active');
 });
 
+// O'yin tugaganda modalni yopib, XONA MENYUSIGA (Lobby) qaytarish
 document.getElementById('gameOverCloseBtn').addEventListener('click', () => {
-  location.reload();
+  document.getElementById('gameOverModal').classList.remove('active');
+  socket.emit('getStats', { clientId }); // Statistikani yangilash
+  showScreen('lobby');
 });
 
 socket.on('playerLeftGameOver', ({ message }) => {
   alert(message);
-  location.reload();
+  showScreen('lobby');
 });
 
 // ==================== BOSHLANG'ICH YUKLASH ====================
