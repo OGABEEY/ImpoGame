@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imposter Game</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="topbar">
+  <div class="topbar-inner">
+    <span id="topbarLogo">🎭 Imposter</span>
+    <div id="nicknameBadge">
+      <span id="nicknameDisplay">O'yinchi</span>
+      <button id="editNicknameBtn" title="Nickname o'zgartirish">✏️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ASOSIY MENU ===================== -->
+<div id="main-menu" class="screen active">
+  <div class="hero">
+    <h1>🎮 O'yinlar Markazi</h1>
+    <p class="subtitle">O'ynagingiz kelgan o'yinni tanlang</p>
+  </div>
+  <div class="game-grid">
+    <div class="game-card featured" id="goToImposter">
+      <div class="game-card-icon">🕵️</div>
+      <h3>Imposter</h3>
+      <p>So'z toping, imposterni aniqlang!</p>
+      <span class="play-tag">O'ynash ▸</span>
+    </div>
+    <div class="game-card disabled">
+      <div class="game-card-icon">🎲</div>
+      <h3>Tez orada...</h3>
+      <p>Yangi o'yinlar tayyorlanmoqda</p>
+    </div>
+    <div class="game-card disabled">
+      <div class="game-card-icon">🧩</div>
+      <h3>Tez orada...</h3>
+      <p>Yangi o'yinlar tayyorlanmoqda</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== IMPOSTER MENU ===================== -->
+<div id="imposter-menu" class="screen">
+  <button class="back-btn" id="backToMainFromMenu">← Orqaga</button>
+  <div class="imposter-menu-layout">
+
+    <div class="panel form-panel">
+      <h2>🕵️ Imposter</h2>
+      <p class="panel-desc">Xona yarating yoki mavjud xonaga qo'shiling</p>
+
+      <div class="field">
+        <label>Nickname</label>
+        <input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16">
+      </div>
+
+      <div class="action-block">
+        <button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button>
+      </div>
+
+      <div class="divider"><span>yoki</span></div>
+
+      <div class="action-block join-block">
+        <input type="text" id="roomIdInput" placeholder="Xona kodi" maxlength="5">
+        <button id="joinLobbyBtn" class="btn btn-secondary">🔑 Qo'shilish</button>
+      </div>
+    </div>
+
+    <div class="panel stats-panel">
+      <h3>📊 Statistikangiz</h3>
+      <div class="stat-row">
+        <div class="stat-box">
+          <span class="stat-value" id="statWins">0</span>
+          <span class="stat-label">G'alabalar</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-value" id="statGames">0</span>
+          <span class="stat-label">O'yinlar</span>
+        </div>
+      </div>
+      <div class="stat-winrate">
+        <span>G'alaba foizi</span>
+        <div class="winrate-bar"><div id="winrateFill" class="winrate-fill"></div></div>
+        <span id="winrateText">0%</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== LOBBY ===================== -->
+<div id="lobby-screen" class="screen">
+  <div class="lobby-header">
+    <h2>Xona: <span id="roomIdDisplay">-----</span></h2>
+    <p class="lobby-hint">Do'stlaringizga shu kodni yuboring</p>
+  </div>
+
+  <ul id="playerList"></ul>
+
+  <div class="lobby-actions">
+    <button id="readyBtn" class="btn btn-secondary">✅ Tayyor</button>
+    <button id="startGameBtn" class="btn btn-primary" style="display:none;">🚀 O'yinni boshlash</button>
+  </div>
+</div>
+
+<!-- ===================== O'YIN EKRANI ===================== -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div id="roleDisplay" class="role-badge">Rol yuklanmoqda...</div>
+    <button id="voteBtn" class="btn btn-danger" disabled>🗳️ Ovoz berish (30s)</button>
+  </div>
+
+  <div id="chatBox"></div>
+
+  <div class="chat-input-row">
+    <input type="text" id="messageInput" placeholder="Xabar yozing...">
+    <button id="sendMessageBtn" class="btn btn-primary">Yuborish</button>
+  </div>
+</div>
+
+<!-- ===================== VOTE MODAL ===================== -->
+<div id="voteModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Kimga ovoz berasiz?</h3>
+    <ul id="voteList"></ul>
+  </div>
+</div>
+
+<!-- ===================== GAME OVER MODAL ===================== -->
+<div id="gameOverModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 id="gameOverTitle">O'yin tugadi</h3>
+    <p id="gameOverMessage"></p>
+    <button id="gameOverCloseBtn" class="btn btn-primary">Menuga qaytish</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
