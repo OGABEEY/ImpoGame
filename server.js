@@ -12,17 +12,17 @@ app.use(express.static(path.join(__dirname, 'Public')));
 
 // ==================== SO'ZLAR RO'YXATI ====================
 const WORD_LIST = [
-    'Olma', 'Uzum', 'Behi', 'Tarvuz', 'Qovun',
+    'Olma', 'Uzum', 'Loviya', 'Tarvuz', 'Qovun',
     'Mashina', 'Velosiped', 'Samolyot', 'Poyezd', 'Kema',
-    'Sher', "Yo'lbars", 'Fil', 'Tulki', "Bo'ri",
-    'Shifokor', "O'qituvchi", 'Duradgor', 'Dehqon', 'Haydovchi',
-    'Futbol', 'Basketbol', 'Shaxmat', 'Boks', 'Suzish',
-    "Tog'", 'Dengiz', "Cho'l", "O'rmon", "Ko'l",
-    'Telefon', 'Kompyuter', 'Televizor', 'Soat', 'Kamera'
+    'Sher', "Yo'lbars", 'Fil', 'Tulki', "Bo'ri", 'Mushuk', 'Kuchuk',
+    'Shifokor', "O'qituvchi", 'Duradgor', 'Dehqon', 'Haydovchi', 'Quruvchi', 'Dasturchi', 'Sotuvchi',
+    'Futbol', 'Basketbol', 'Shaxmat', 'Boks', 'Suzish', 'Tennis', 'KiberSport',
+    "Tog'", 'Dengiz', "Cho'l", "O'rmon", "Ko'l", 'Jar', "Cho'qqi",
+    'Telefon', 'Kompyuter', 'Televizor', 'Soat', 'Kamera', 'Muzlatgich'
 ];
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const VOTE_DURATION_MS = 30000;
+const VOTE_DURATION_MS = 60000;
 const VOTE_UNLOCK_DELAY_MS = 30000;
 const STATS_FILE = path.join(__dirname, 'stats.json');
 
