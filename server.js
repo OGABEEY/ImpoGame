@@ -157,7 +157,7 @@ function tallyVotes(roomId) {
     room.voting = null;
 
     if (maxVotes === 0 || topCandidates.length !== 1) {
-        io.to(roomId).emit('voteResult', { message: "Ovozlar teng bo'ldi. Vote jarayoni skip qilindi, hech kim susdirilmadi." });
+        io.to(roomId).emit('voteResult', { message: "Ovozlar teng bo'ldi. Vote jarayoni skip qilindi, hech kim chiqib ketmadi." });
         sendSystemMessage(roomId, "Vote skip qilindi: ovozlar teng bo'ldi.");
         scheduleVoteUnlock(roomId);
         return;
@@ -168,17 +168,17 @@ function tallyVotes(roomId) {
     if (!targetPlayer) { scheduleVoteUnlock(roomId); return; }
 
     if (targetPlayer.isImposter) {
-        const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi va u IMPOSTER edi! 🎉`;
+        const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi va u FIRIBGAR edi! 🎉`;
         io.to(roomId).emit('voteResult', { message: msg });
         sendSystemMessage(roomId, msg);
-        endGame(roomId, 'crew', `Jamoa g'alaba qozondi! Imposter (${targetPlayer.nickname}) topildi.`);
+        endGame(roomId, 'crew', `Oddiy o'yinchilar g'alaba qozondi! FIRIBGAR (${targetPlayer.nickname}) topildi.`);
         return;
     }
 
     targetPlayer.isMuted = true;
     room.unmutedCrewCount -= 1;
 
-    const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi. Uning chatga yozish huquqi olib qo'yildi.`;
+    const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi. U oddiy o'yinchi edi.`;
     io.to(roomId).emit('voteResult', { message: msg });
     sendSystemMessage(roomId, msg);
 
@@ -189,7 +189,7 @@ function tallyVotes(roomId) {
 
     if (room.unmutedCrewCount <= 1) {
         const imposterPlayer = room.players.get(room.imposterId);
-        endGame(roomId, 'imposter', `Imposter g'alaba qozondi! Imposter ${imposterPlayer ? imposterPlayer.nickname : ''} edi.`);
+        endGame(roomId, 'imposter', `FIRIBGAR g'alaba qozondi! Imposter ${imposterPlayer ? imposterPlayer.nickname : ''} edi.`);
         return;
     }
 
@@ -295,7 +295,7 @@ io.on('connection', (socket) => {
             else s.emit('gameStarted', { role: 'Ishtirokchi', word });
         });
 
-        sendSystemMessage(roomId, "O'yin boshlandi! So'zga bog'liq so'zlarni yozib, imposterni toping.");
+        sendSystemMessage(roomId, "O'yin boshlandi! So'zga bog'liq so'zlarni yozib, FIRIBGARni toping.");
         scheduleVoteUnlock(roomId);
     });
 
