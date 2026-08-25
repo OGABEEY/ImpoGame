@@ -257,7 +257,7 @@ function sendChatMessage() {
 socket.on('playerMuted', () => {
   document.getElementById('messageInput').disabled = true;
   document.getElementById('sendMessageBtn').disabled = true;
-  document.getElementById('messageInput').placeholder = "Sizning yozish huquqingiz olib qo'yildi";
+  document.getElementById('messageInput').placeholder = "Siz chiqarib yuborildingiz";
 });
 
 // ==================== OVOZ BERISH ====================
