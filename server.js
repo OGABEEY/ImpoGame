@@ -57,14 +57,6 @@ function registerGameResult(clientIds, won) {
     saveStats();
 }
 
-/**
- * rooms: roomId -> {
- *   hostId, players: Map(socketId -> { nickname, clientId, isReady, isMuted, isImposter }),
- *   started, word, imposterId, unmutedCrewCount,
- *   voting: { votes: Map, timeout } | null,
- *   voteLockTimeout
- * }
- */
 const rooms = new Map();
 
 // ==================== YORDAMCHI FUNKSIYALAR ====================
@@ -283,7 +275,7 @@ io.on('connection', (socket) => {
         if (socket.id !== room.hostId) { socket.emit('errorMsg', "Faqat host o'yinni boshlashi mumkin!"); return; }
         if (room.players.size < 3) { socket.emit('errorMsg', "O'yinni boshlash uchun kamida 3 ta o'yinchi kerak!"); return; }
         const notReady = Array.from(room.players.entries()).some(([id, p]) => id !== room.hostId && !p.isReady);
-        if (notReady) { socket.emit('errorMsg', '"Barcha o\'yinchilar Tayyor bo\'lishi kerak!'); return; }
+        if (notReady) { socket.emit('errorMsg', 'Barcha o\'yinchilar Tayyor bo\'lishi kerak!'); return; }
 
         const playerIds = Array.from(room.players.keys());
         const imposterId = playerIds[Math.floor(Math.random() * playerIds.length)];
@@ -321,7 +313,13 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomId);
         if (!room || !room.started) return;
         const player = room.players.get(socket.id);
-        if (!player) return;
+        
+        // Mutelangan (chiqarilgan) o'yinchi ovoz berishni boshlay olmaydi
+        if (!player || player.isMuted) { 
+            socket.emit('errorMsg', "O'yindan chiqarilgansiz, ovoz berishni boshlay olmaysiz!"); 
+            return; 
+        }
+
         if (room.voting) { socket.emit('errorMsg', 'Ovoz berish allaqachon boshlangan!'); return; }
         if (room.voteLockTimeout) { socket.emit('errorMsg', 'Hali ovoz berishni boshlash vaqti kelmadi!'); return; }
 
@@ -335,13 +333,22 @@ io.on('connection', (socket) => {
     socket.on('castVote', ({ roomId, targetId }) => {
         const room = rooms.get(roomId);
         if (!room || !room.voting) return;
+
         const voter = room.players.get(socket.id);
         const target = room.players.get(targetId);
-        if (!voter || !target || target.isMuted) return;
+
+        // Ovoz berayotgan yoki maqsad o'yinchi mutelangan bo'lsa ovoz qabul qilinmaydi
+        if (!voter || voter.isMuted || !target || target.isMuted) return;
         if (targetId === socket.id) return;
 
         room.voting.votes.set(socket.id, targetId);
-        if (room.voting.votes.size >= room.players.size) tallyVotes(roomId);
+
+        // Faqat faol (mutelanmagan) o'yinchilar soniga qarab ovozlarni tekshirish
+        const activePlayersCount = Array.from(room.players.values()).filter(p => !p.isMuted).length;
+
+        if (room.voting.votes.size >= activePlayersCount) {
+            tallyVotes(roomId);
+        }
     });
 
     socket.on('disconnect', () => {
