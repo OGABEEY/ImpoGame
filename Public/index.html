@@ -28,7 +28,7 @@
     <div class="game-card featured" id="goToImposter">
       <div class="game-card-icon">🕵️</div>
       <h3>Firibgarni top</h3>
-      <p>⚠️ Berilgan so'zga (kalit) bog'liq so'zlarni chatga yozing, firibgarga so'z taqdim etilmaydi, yozishmalar orqali firibgarni aniqlang! KALIT SO'ZNI HECHKIMGA AYTMANG!</p>
+      <p>⚠️ Navbat bilan kalit so'zga bog'liq so'z ayting. Firibgarga so'z berilmaydi — uni fosh eting! KALIT SO'ZNI HECHKIMGA AYTMANG!</p>
       <span class="play-tag">O'ynash ➡️</span>
     </div>
     <div class="game-card disabled">
@@ -47,48 +47,25 @@
 <!-- ===================== IMPOSTER MENU ===================== -->
 <div id="imposter-menu" class="screen">
   <button class="back-btn" id="backToMainFromMenu">← Orqaga</button>
-  <div class="imposter-menu-layout">
+  <div class="panel form-panel single-panel">
+    <h2>🕵️ Firibgarni top</h2>
+    <p class="panel-desc">Xona yarating yoki mavjud xonaga qo'shiling</p>
 
-    <div class="panel form-panel">
-      <h2>🕵️ Firibgarni top</h2>
-      <p class="panel-desc">Xona yarating yoki mavjud xonaga qo'shiling</p>
-
-      <div class="field">
-        <label>Nickname</label>
-        <input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16">
-      </div>
-
-      <div class="action-block">
-        <button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button>
-      </div>
-
-      <div class="divider"><span>yoki</span></div>
-
-      <div class="action-block join-block">
-        <input type="text" id="roomIdInput" placeholder="Xona kodi" maxlength="5">
-        <button id="joinLobbyBtn" class="btn btn-secondary">🔑 Qo'shilish</button>
-      </div>
+    <div class="field">
+      <label>Nickname</label>
+      <input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16">
     </div>
 
-    <div class="panel stats-panel">
-      <h3>📊 Statistikangiz</h3>
-      <div class="stat-row">
-        <div class="stat-box">
-          <span class="stat-value" id="statWins">0</span>
-          <span class="stat-label">G'alabalar</span>
-        </div>
-        <div class="stat-box">
-          <span class="stat-value" id="statGames">0</span>
-          <span class="stat-label">O'yinlar</span>
-        </div>
-      </div>
-      <div class="stat-winrate">
-        <span>G'alaba foizi</span>
-        <div class="winrate-bar"><div id="winrateFill" class="winrate-fill"></div></div>
-        <span id="winrateText">0%</span>
-      </div>
+    <div class="action-block">
+      <button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button>
     </div>
 
+    <div class="divider"><span>yoki</span></div>
+
+    <div class="action-block join-block">
+      <input type="text" id="roomIdInput" placeholder="Xona kodi" maxlength="5">
+      <button id="joinLobbyBtn" class="btn btn-secondary">🔑 Qo'shilish</button>
+    </div>
   </div>
 </div>
 
@@ -99,11 +76,65 @@
     <p class="lobby-hint">Do'stlaringizga shu kodni yuboring</p>
   </div>
 
-  <ul id="playerList"></ul>
+  <div class="lobby-layout">
+    <div class="lobby-col">
+      <h3 class="col-title">👥 O'yinchilar</h3>
+      <ul id="playerList"></ul>
 
-  <div class="lobby-actions">
-    <button id="readyBtn" class="btn btn-secondary">✅ Tayyor</button>
-    <button id="startGameBtn" class="btn btn-primary" style="display:none;">🚀 O'yinni boshlash</button>
+      <div class="lobby-actions">
+        <button id="readyBtn" class="btn btn-secondary">✅ Tayyor</button>
+        <button id="startGameBtn" class="btn btn-primary" style="display:none;">🚀 Boshlash</button>
+      </div>
+    </div>
+
+    <div class="lobby-col">
+      <div class="panel settings-panel">
+        <h3 class="col-title">⚙️ Xona sozlamalari</h3>
+        <div id="hostOnlyNote" class="host-note">Faqat host o'zgartira oladi</div>
+
+        <div class="setting-row">
+          <label>Kategoriya</label>
+          <select id="setCategory" class="host-control"></select>
+        </div>
+        <div class="setting-row">
+          <label>Firibgarlar soni</label>
+          <select id="setImposterCount" class="host-control">
+            <option value="1">1 ta</option>
+            <option value="2">2 ta (5+ o'yinchi)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Detektiv roli</label>
+          <select id="setDetective" class="host-control">
+            <option value="true">Yoqilgan</option>
+            <option value="false">O'chirilgan</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Navbat vaqti</label>
+          <select id="setTurnSeconds" class="host-control">
+            <option value="15">15 soniya</option>
+            <option value="30">30 soniya</option>
+            <option value="45">45 soniya</option>
+            <option value="60">60 soniya</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Ovoz berish vaqti</label>
+          <select id="setVoteSeconds" class="host-control">
+            <option value="20">20 soniya</option>
+            <option value="30">30 soniya</option>
+            <option value="45">45 soniya</option>
+            <option value="60">60 soniya</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel leaderboard-panel">
+        <h3 class="col-title">🏆 Xona reytingi</h3>
+        <div id="leaderboardBox"><p class="empty-note">Hali o'yin o'ynalmadi</p></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -111,14 +142,19 @@
 <div id="game-screen" class="screen">
   <div class="game-header">
     <div id="roleDisplay" class="role-badge">Rol yuklanmoqda...</div>
-    <button id="voteBtn" class="btn btn-danger" disabled>🗳️ Ovoz berish (30s)</button>
+    <div class="header-actions">
+      <button id="detectiveBtn" class="btn btn-secondary" style="display:none;">🔍 Tekshirish</button>
+      <button id="voteBtn" class="btn btn-danger" disabled>🗳️ Ovoz berish</button>
+    </div>
   </div>
+
+  <div id="turnBanner" class="turn-banner">Raund boshlanmoqda...</div>
 
   <div id="chatBox"></div>
 
   <div class="chat-input-row">
-    <input type="text" id="messageInput" placeholder="Xabar yozing...">
-    <button id="sendMessageBtn" class="btn btn-primary">Yuborish</button>
+    <input type="text" id="messageInput" placeholder="Navbatingizni kuting..." disabled>
+    <button id="sendMessageBtn" class="btn btn-primary" disabled>Yuborish</button>
   </div>
 </div>
 
@@ -126,16 +162,36 @@
 <div id="voteModal" class="modal-overlay">
   <div class="modal-box">
     <h3>Kimga ovoz berasiz?</h3>
+    <p id="voteTimer" class="modal-sub"></p>
     <ul id="voteList"></ul>
+  </div>
+</div>
+
+<!-- ===================== DETEKTIV MODAL ===================== -->
+<div id="detectiveModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>🔍 Kimni tekshirasiz?</h3>
+    <p class="modal-sub">Bu qobiliyatdan faqat bir marta foydalana olasiz!</p>
+    <ul id="detectiveList"></ul>
+    <button id="detectiveCancelBtn" class="btn btn-secondary">Bekor qilish</button>
   </div>
 </div>
 
 <!-- ===================== GAME OVER MODAL ===================== -->
 <div id="gameOverModal" class="modal-overlay">
-  <div class="modal-box">
+  <div class="modal-box modal-wide">
     <h3 id="gameOverTitle">O'yin tugadi</h3>
     <p id="gameOverMessage"></p>
-    <button id="gameOverCloseBtn" class="btn btn-primary">Menuga qaytish</button>
+    <div id="newAchievementsBox"></div>
+
+    <div class="recap-tabs">
+      <button class="tab-btn active" data-tab="recap">📜 O'yin tarixi</button>
+      <button class="tab-btn" data-tab="board">🏆 Reyting</button>
+    </div>
+    <div id="recapContent" class="tab-content active"></div>
+    <div id="boardContent" class="tab-content"></div>
+
+    <button id="gameOverCloseBtn" class="btn btn-primary">Lobbyga qaytish</button>
   </div>
 </div>
 
