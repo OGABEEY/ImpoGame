@@ -130,7 +130,14 @@ function endGame(roomId, winner, message) {
     registerGameResult(losingClientIds, false);
 
     io.to(roomId).emit('gameOver', { winner, message });
-    rooms.delete(roomId);
+
+    // O'yin tugadi, lekin xona o'chirilmaydi — tezda qayta o'ynash uchun lobby holatiga qaytaramiz
+    room.started = false;
+    room.word = null;
+    room.imposterId = null;
+    room.voting = null;
+    room.players.forEach(p => { p.isMuted = false; p.isReady = false; p.isImposter = false; });
+    broadcastPlayers(roomId);
 }
 
 function resetRoomToLobby(roomId, reasonMessage) {

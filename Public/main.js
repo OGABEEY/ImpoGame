@@ -22,6 +22,7 @@ let currentRoomId = null;
 let currentPlayers = [];
 let isHost = false;
 let voteCooldownTimer = null;
+let isMuted = false;
 
 // ==================== DOM ====================
 const screens = {
@@ -178,6 +179,7 @@ document.getElementById('startGameBtn').addEventListener('click', () => {
 socket.on('gameStarted', ({ role, word }) => {
   showScreen('game');
   document.getElementById('chatBox').innerHTML = '';
+  isMuted = false;
   const roleDisplay = document.getElementById('roleDisplay');
 
   if (word) {
@@ -204,8 +206,10 @@ function startVoteCooldownUI(seconds) {
     remaining -= 1;
     if (remaining <= 0) {
       clearInterval(voteCooldownTimer);
-      voteBtn.disabled = false;
-      voteBtn.textContent = '🗳️ Ovoz berish';
+      if (!isMuted) {
+        voteBtn.disabled = false;
+        voteBtn.textContent = '🗳️ Ovoz berish';
+      }
     } else {
       voteBtn.textContent = `🗳️ Ovoz berish (${remaining}s)`;
     }
@@ -215,6 +219,7 @@ function startVoteCooldownUI(seconds) {
 socket.on('voteUnlocked', () => {
   const voteBtn = document.getElementById('voteBtn');
   if (voteCooldownTimer) clearInterval(voteCooldownTimer);
+  if (isMuted) return;
   voteBtn.disabled = false;
   voteBtn.textContent = '🗳️ Ovoz berish';
 });
@@ -255,9 +260,15 @@ function sendChatMessage() {
 }
 
 socket.on('playerMuted', () => {
+  isMuted = true;
   document.getElementById('messageInput').disabled = true;
   document.getElementById('sendMessageBtn').disabled = true;
   document.getElementById('messageInput').placeholder = "Sizning yozish huquqingiz olib qo'yildi";
+
+  if (voteCooldownTimer) clearInterval(voteCooldownTimer);
+  const voteBtn = document.getElementById('voteBtn');
+  voteBtn.disabled = true;
+  voteBtn.textContent = "🔇 Ovoz berishda qatnasha olmaysiz";
 });
 
 // ==================== OVOZ BERISH ====================
@@ -300,12 +311,23 @@ socket.on('gameOver', ({ winner, message }) => {
 });
 
 document.getElementById('gameOverCloseBtn').addEventListener('click', () => {
-  location.reload();
+  document.getElementById('gameOverModal').classList.remove('active');
+  isMuted = false;
+  document.getElementById('messageInput').disabled = false;
+  document.getElementById('sendMessageBtn').disabled = false;
+  document.getElementById('messageInput').placeholder = "Xabar yozing...";
+  showScreen('lobby');
 });
 
 socket.on('playerLeftGameOver', ({ message }) => {
   alert(message);
-  location.reload();
+  document.getElementById('gameOverModal').classList.remove('active');
+  document.getElementById('voteModal').classList.remove('active');
+  isMuted = false;
+  document.getElementById('messageInput').disabled = false;
+  document.getElementById('sendMessageBtn').disabled = false;
+  document.getElementById('messageInput').placeholder = "Xabar yozing...";
+  showScreen('lobby');
 });
 
 // ==================== BOSHLANG'ICH YUKLASH ====================
