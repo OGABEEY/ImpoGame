@@ -200,9 +200,24 @@ function renderLeaderboard(leaderboard, container) {
       const ach = document.createElement('div');
       ach.className = 'lb-achievements';
       entry.achievements.forEach(a => {
-        const s = document.createElement('span');
-        s.className = 'ach-icon'; s.textContent = a.icon; s.title = a.title + ' — ' + a.desc;
-        ach.appendChild(s);
+        const wrap = document.createElement('span');
+        wrap.className = 'ach-wrap';
+
+        const icon = document.createElement('span');
+        icon.className = 'ach-icon';
+        icon.textContent = a.icon;
+        wrap.appendChild(icon);
+
+        const tip = document.createElement('span');
+        tip.className = 'ach-tooltip';
+        const t = document.createElement('b');
+        t.textContent = a.title;
+        tip.appendChild(t);
+        tip.appendChild(document.createElement('br'));
+        tip.appendChild(document.createTextNode(a.desc));
+        wrap.appendChild(tip);
+
+        ach.appendChild(wrap);
       });
       container.appendChild(ach);
     }
@@ -593,5 +608,11 @@ function resetGameUI() {
   document.getElementById('detectiveBtn').disabled = false;
   document.getElementById('detectiveBtn').textContent = '🔍 Tekshirish';
 }
+
+// ==================== QOIDALAR PANELI (ochish/yopish) ====================
+document.getElementById('rulesToggle').addEventListener('click', () => {
+  document.getElementById('rulesBody').classList.toggle('hidden');
+  document.getElementById('rulesArrow').classList.toggle('collapsed');
+});
 
 refreshNicknameBadge();

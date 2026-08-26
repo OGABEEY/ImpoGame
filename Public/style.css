@@ -109,8 +109,50 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 .lb-rank { width: 26px; font-size: 0.9rem; }
 .lb-name { flex: 1; font-size: 0.9rem; }
 .lb-score { color: var(--accent); font-weight: 600; font-size: 0.88rem; }
-.lb-achievements { display: flex; gap: 4px; padding: 0 10px 8px 46px; flex-wrap: wrap; }
-.ach-icon { font-size: 0.95rem; cursor: help; }
+.lb-achievements { display: flex; gap: 7px; padding: 0 10px 8px 46px; flex-wrap: wrap; position: relative; }
+.ach-wrap { position: relative; display: inline-flex; }
+.ach-icon { font-size: 0.95rem; cursor: help; transition: transform .12s; }
+.ach-wrap:hover .ach-icon { transform: scale(1.35); }
+
+.ach-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0b0d12;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 7px 10px;
+  width: max-content;
+  max-width: 190px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+  text-align: center;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .15s, transform .15s;
+  z-index: 60;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+.ach-tooltip b { color: var(--text); display: block; margin-bottom: 2px; font-size: 0.78rem; }
+.ach-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--accent);
+}
+.ach-wrap:hover .ach-tooltip,
+.ach-wrap:focus-within .ach-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
 
 /* ===== GAME SCREEN ===== */
 .game-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -170,3 +212,54 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 .recap-vote { font-size: 0.8rem; color: var(--warning); margin: 5px 0; }
 .recap-elim { font-size: 0.83rem; color: var(--danger); margin: 5px 0; font-weight: 600; }
 .recap-system { font-size: 0.78rem; color: var(--text-dim); font-style: italic; margin: 3px 0; }
+
+/* ===== QOIDALAR PANELI ===== */
+.rules-panel { padding: 16px 18px; }
+.rules-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+.rules-header .col-title { margin: 0; }
+.rules-arrow { color: var(--text-dim); font-size: 0.8rem; transition: transform .2s; }
+.rules-arrow.collapsed { transform: rotate(-90deg); }
+
+.rules-body { margin-top: 14px; max-height: 460px; overflow-y: auto; padding-right: 4px; }
+.rules-body.hidden { display: none; }
+
+.rules-section { margin-bottom: 18px; }
+.rules-section:last-child { margin-bottom: 0; }
+.rules-section h4 { margin: 0 0 7px; font-size: 0.88rem; color: var(--accent); }
+.rules-section p { margin: 0 0 6px; font-size: 0.83rem; color: var(--text-dim); line-height: 1.5; }
+
+.rules-list { margin: 6px 0 0; padding-left: 20px; }
+.rules-list li { font-size: 0.83rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 5px; }
+.rules-list b { color: var(--text); }
+.rules-section p b { color: var(--text); }
+
+.role-card { background: var(--bg-alt); border: 1px solid var(--border); border-left-width: 3px; border-radius: 9px; padding: 10px 12px; margin-bottom: 8px; }
+.role-card-head { font-size: 0.87rem; margin-bottom: 4px; }
+.role-card p { margin: 0; font-size: 0.8rem; line-height: 1.5; }
+.role-card-crew { border-left-color: var(--success); }
+.role-card-imposter { border-left-color: var(--danger); }
+.role-card-detective { border-left-color: var(--accent); }
+.role-card-ghost { border-left-color: #64748b; }
+
+.ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+@media (max-width: 500px) { .ach-grid { grid-template-columns: 1fr; } }
+.ach-grid span { display: block; background: var(--bg-alt); border-radius: 7px; padding: 7px 9px; }
+.ach-grid b { display: block; font-size: 0.78rem; color: var(--text); font-weight: 600; }
+.ach-grid em { display: block; font-size: 0.71rem; color: var(--text-dim); font-style: normal; margin-top: 2px; line-height: 1.35; }
+
+/* Modal ichidagi (scroll bo'ladigan) reytingda tooltip pastga chiqsin — kesilib qolmasligi uchun */
+.tab-content .ach-tooltip {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-4px);
+}
+.tab-content .ach-tooltip::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--accent);
+}
+.tab-content .ach-wrap:hover .ach-tooltip,
+.tab-content .ach-wrap:focus-within .ach-tooltip {
+  transform: translateX(-50%) translateY(0);
+}
