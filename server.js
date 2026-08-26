@@ -46,17 +46,63 @@ const CATEGORIES = {
     }
 };
 
+// ==================== MAXFIY SO'Z OSHKOR BO'LISHINI ANIQLASH ====================
+// O'zbek tilida turli apostrof belgilari ishlatiladi — hammasini bittaga keltiramiz
+function normalizeUz(str) {
+    return (str || '')
+        .toLowerCase()
+        .replace(/[\u2018\u2019\u02BB\u02BC\u0060\u00B4]/g, "'")  // ' ' ʻ ʼ ` ´  ->  '
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Xabarda maxfiy so'z aytilganmi?
+ * - Ko'p so'zli kalit ("Kir yuvish mashinasi") uchun butun matndan qidiramiz
+ * - Bir so'zli kalit uchun har bir so'zni tekshiramiz: qo'shimchali shakl ham hisoblanadi
+ *   (olma -> olmalar, olmani, olmadan ...)
+ */
+function messageRevealsWord(message, secretWord) {
+    const msg = normalizeUz(message);
+    const word = normalizeUz(secretWord);
+    if (!msg || !word) return false;
+
+    // Ko'p so'zli kalit so'z
+    if (word.includes(' ')) return msg.includes(word);
+
+    // Juda qisqa so'zlar uchun faqat aniq moslik (noto'g'ri ishlamasligi uchun)
+    const tokens = msg.split(/[^a-z0-9']+/).filter(Boolean);
+    if (word.length <= 3) return tokens.includes(word);
+
+    // Qo'shimchali shakllar ham oshkor hisoblanadi
+    return tokens.some(t => t === word || t.startsWith(word));
+}
+
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const MIN_ROOM_SIZE = 3;
+const MAX_ROOM_SIZE = 9;    // xonaga kira oladigan maksimal odam
+const DEFAULT_ROOM_SIZE = 9;
+const MAX_IMPOSTERS = 3;
+
+// Har bir josus soni uchun kerakli minimal o'yinchi soni
+const MIN_PLAYERS_FOR_IMPOSTERS = { 1: 3, 2: 5, 3: 7 };
+
+// Saytdagi faol foydalanuvchilar
+const ONLINE_ROOM = 'online-counter';
+let onlineCount = 0;
+function broadcastOnlineCount() {
+    io.emit('onlineCount', { count: onlineCount, rooms: rooms.size });
+}
 
 // ==================== YUTUQLAR (ACHIEVEMENTS) ====================
 const ACHIEVEMENTS = {
     firstWin:        { icon: '🎉', title: 'Birinchi g\'alaba',  desc: 'Birinchi marta g\'alaba qozondingiz' },
-    imposterWin:     { icon: '🕵️', title: 'Mohir firibgar',    desc: 'Firibgar sifatida g\'alaba qozondingiz' },
-    sherlock:        { icon: '🔍', title: 'Sherlock',           desc: 'Firibgarga to\'g\'ri ovoz berdingiz' },
+    imposterWin:     { icon: '🕵️', title: 'Mohir josus',    desc: 'Josus sifatida g\'alaba qozondingiz' },
+    sherlock:        { icon: '🔍', title: 'Sherlock',           desc: 'Josusga to\'g\'ri ovoz berdingiz' },
     survivor:        { icon: '🛡️', title: 'Omon qolgan',       desc: 'Hech qachon susdirilmasdan g\'alaba qozondingiz' },
     hatTrick:        { icon: '🔥', title: 'Uch karra',          desc: 'Ketma-ket 3 marta g\'alaba qozondingiz' },
     ghostWhisperer:  { icon: '👻', title: 'Arvoh',              desc: 'Susdirilgan holda ham jamoangiz yutdi' },
-    detective:       { icon: '🎖️', title: 'Detektiv ishi',     desc: 'Detektiv sifatida firibgarni tekshirdingiz' },
+    detective:       { icon: '🎖️', title: 'Detektiv ishi',     desc: 'Detektiv sifatida josusni tekshirdingiz' },
     veteran:         { icon: '⭐', title: 'Faxriy',             desc: 'Ushbu xonada 5 ta o\'yin o\'ynadingiz' }
 };
 
@@ -94,7 +140,8 @@ function defaultSettings() {
         detectiveEnabled: true,
         turnSeconds: 30,
         voteSeconds: 30,
-        category: 'aralash'
+        category: 'aralash',
+        maxPlayers: DEFAULT_ROOM_SIZE
     };
 }
 
@@ -107,12 +154,43 @@ function getPlayersArray(room) {
     }));
 }
 
+const LOBBY_BROWSER = 'lobby-browser';
+
+function getPublicRoomsList() {
+    const list = [];
+    rooms.forEach((room, roomId) => {
+        if (!room.isPublic) return;
+        const hostPlayer = room.players.get(room.hostId);
+        list.push({
+            roomId,
+            name: room.roomName,
+            hostName: hostPlayer ? hostPlayer.nickname : '?',
+            playerCount: room.players.size,
+            maxPlayers: room.settings.maxPlayers,
+            isFull: room.players.size >= room.settings.maxPlayers,
+            started: room.started,
+            category: CATEGORIES[room.settings.category].name,
+            imposterCount: room.settings.imposterCount,
+            detectiveEnabled: room.settings.detectiveEnabled
+        });
+    });
+    // Avval kutayotgan xonalar, keyin o'yinchilar soni bo'yicha
+    return list.sort((a, b) => (a.started - b.started) || (b.playerCount - a.playerCount));
+}
+
+function broadcastPublicRooms() {
+    io.to(LOBBY_BROWSER).emit('publicRoomsUpdate', { rooms: getPublicRoomsList() });
+    broadcastOnlineCount();
+}
+
 function broadcastPlayers(roomId) {
     const room = rooms.get(roomId);
     if (!room) return;
     io.to(roomId).emit('updatePlayers', {
         players: getPlayersArray(room),
         hostId: room.hostId,
+        isPublic: !!room.isPublic,
+        roomName: room.roomName,
         settings: room.settings,
         categories: Object.entries(CATEGORIES).map(([key, c]) => ({ key, name: c.name })),
         leaderboard: getLeaderboardArray(room)
@@ -130,8 +208,7 @@ function getLeaderboardArray(room) {
         .sort((a, b) => b.wins - a.wins || b.games - a.games);
 }
 
-function ensureLeaderboardEntry(room, nickname) {
-    if (!room.leaderboard.has(nickname)) {
+function ensureLeaderboardEntry(room, nickname) {    if (!room.leaderboard.has(nickname)) {
         room.leaderboard.set(nickname, { wins: 0, games: 0, achievements: new Set(), streak: 0 });
     }
     return room.leaderboard.get(nickname);
@@ -302,6 +379,7 @@ function endGame(roomId, winner, message) {
     // Xona saqlanadi — tez qayta o'ynash uchun lobby holatiga qaytamiz
     room.started = false;
     room.word = null;
+    room.wordRevealed = false;
     room.imposterIds = new Set();
     room.voting = null;
     room.voteLockOpen = false;
@@ -313,6 +391,7 @@ function endGame(roomId, winner, message) {
         p.isDetective = false; p.detectiveUsed = false;
     });
     broadcastPlayers(roomId);
+    broadcastPublicRooms();
 }
 
 function resetRoomToLobby(roomId, reasonMessage) {
@@ -321,6 +400,7 @@ function resetRoomToLobby(roomId, reasonMessage) {
     clearRoomTimers(room);
     room.started = false;
     room.word = null;
+    room.wordRevealed = false;
     room.imposterIds = new Set();
     room.voting = null;
     room.voteLockOpen = false;
@@ -333,6 +413,7 @@ function resetRoomToLobby(roomId, reasonMessage) {
     });
     io.to(roomId).emit('playerLeftGameOver', { message: reasonMessage });
     broadcastPlayers(roomId);
+    broadcastPublicRooms();
 }
 
 // ==================== OVOZ BERISH ====================
@@ -372,11 +453,11 @@ function tallyVotes(roomId) {
     const targetPlayer = room.players.get(targetId);
     if (!targetPlayer) { startNextRound(roomId); return; }
 
-    // Firibgarga to'g'ri ovoz berganlarga yutuq
+    // Josusga to'g'ri ovoz berganlarga yutuq
     if (targetPlayer.isImposter) {
         room.voting = null;
         room.recap.push({ type: 'eliminate', nickname: targetPlayer.nickname, wasImposter: true });
-        const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi va u FIRIBGAR edi! 🎉`;
+        const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi va u JOSUS edi! 🎉`;
         io.to(roomId).emit('voteResult', { message: msg });
         sendSystemMessage(roomId, msg);
 
@@ -385,14 +466,14 @@ function tallyVotes(roomId) {
             if (v.target === targetPlayer.nickname) grantAchievement(room, v.voter, 'sherlock');
         });
 
-        endGame(roomId, 'crew', `Jamoa g'alaba qozondi! Firibgar (${targetPlayer.nickname}) topildi.`);
+        endGame(roomId, 'crew', `Jamoa g'alaba qozondi! Josus (${targetPlayer.nickname}) topildi.`);
         return;
     }
 
     targetPlayer.isMuted = true;
     room.recap.push({ type: 'eliminate', nickname: targetPlayer.nickname, wasImposter: false });
 
-    const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi, lekin u firibgar emas edi. Endi u arvoh! 👻`;
+    const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi, lekin u josus emas edi. Endi u arvoh! 👻`;
     io.to(roomId).emit('voteResult', { message: msg });
     sendSystemMessage(roomId, msg);
 
@@ -406,7 +487,7 @@ function tallyVotes(roomId) {
 
     if (remainingCrew <= imposterCount) {
         const imposterNames = Array.from(room.players.values()).filter(p => p.isImposter).map(p => p.nickname);
-        endGame(roomId, 'imposter', `Firibgar g'alaba qozondi! Firibgar: ${imposterNames.join(', ')}`);
+        endGame(roomId, 'imposter', `Josus g'alaba qozondi! Josus: ${imposterNames.join(', ')}`);
         return;
     }
 
@@ -417,16 +498,27 @@ function tallyVotes(roomId) {
 
 io.on('connection', (socket) => {
 
-    socket.on('createLobby', ({ nickname }) => {
+    onlineCount++;
+    broadcastOnlineCount();
+
+    socket.on('getOnlineCount', () => {
+        socket.emit('onlineCount', { count: onlineCount, rooms: rooms.size });
+    });
+
+
+    socket.on('createLobby', ({ nickname, isPublic, roomName }) => {
         if (!nickname || !nickname.trim()) { socket.emit('errorMsg', "Nickname noto'g'ri!"); return; }
         const roomId = generateRoomCode();
+        const cleanName = (roomName || '').trim().slice(0, 24) || `${nickname.trim()} xonasi`;
         rooms.set(roomId, {
             hostId: socket.id,
+            isPublic: !!isPublic,
+            roomName: cleanName,
             players: new Map([[socket.id, {
                 nickname: nickname.trim(), isReady: false, isMuted: false,
                 isImposter: false, isDetective: false, detectiveUsed: false
             }]]),
-            started: false, word: null, imposterIds: new Set(),
+            started: false, word: null, imposterIds: new Set(), wordRevealed: false,
             settings: defaultSettings(),
             turnOrder: [], turnIndex: 0, turnTimer: null,
             roundNumber: 0, voting: null, voteLockOpen: false,
@@ -434,14 +526,39 @@ io.on('connection', (socket) => {
             leaderboard: new Map()
         });
         socket.join(roomId);
+        socket.leave(LOBBY_BROWSER);
         socket.emit('lobbyCreated', { roomId });
         broadcastPlayers(roomId);
+        broadcastPublicRooms();
+    });
+
+    // ---------- OCHIQ XONALAR RO'YXATI ----------
+    socket.on('browsePublicRooms', () => {
+        socket.join(LOBBY_BROWSER);
+        socket.emit('publicRoomsUpdate', { rooms: getPublicRoomsList() });
+    });
+
+    socket.on('stopBrowsing', () => {
+        socket.leave(LOBBY_BROWSER);
+    });
+
+    socket.on('toggleRoomVisibility', ({ roomId, isPublic }) => {
+        const room = rooms.get(roomId);
+        if (!room) return;
+        if (socket.id !== room.hostId) { socket.emit('errorMsg', "Faqat host o'zgartira oladi!"); return; }
+        room.isPublic = !!isPublic;
+        broadcastPlayers(roomId);
+        broadcastPublicRooms();
     });
 
     socket.on('joinLobby', ({ roomId, nickname }) => {
         const room = rooms.get(roomId);
         if (!room) { socket.emit('errorMsg', 'Bunday xona topilmadi!'); return; }
         if (room.started) { socket.emit('errorMsg', "O'yin allaqachon boshlangan!"); return; }
+        if (room.players.size >= room.settings.maxPlayers) {
+            socket.emit('errorMsg', `Xona to'lgan! (${room.players.size}/${room.settings.maxPlayers})`);
+            return;
+        }
         if (!nickname || !nickname.trim()) { socket.emit('errorMsg', "Nickname noto'g'ri!"); return; }
         const taken = Array.from(room.players.values()).some(p => p.nickname.toLowerCase() === nickname.trim().toLowerCase());
         if (taken) { socket.emit('errorMsg', 'Bu nickname band, boshqasini tanlang!'); return; }
@@ -451,8 +568,10 @@ io.on('connection', (socket) => {
             isImposter: false, isDetective: false, detectiveUsed: false
         });
         socket.join(roomId);
+        socket.leave(LOBBY_BROWSER);
         socket.emit('joinedLobby', { roomId });
         broadcastPlayers(roomId);
+        broadcastPublicRooms();
         sendSystemMessage(roomId, `${nickname.trim()} xonaga qo'shildi.`);
     });
 
@@ -479,7 +598,7 @@ io.on('connection', (socket) => {
 
         const s = room.settings;
         if (settings.imposterCount !== undefined) {
-            s.imposterCount = Math.max(1, Math.min(2, parseInt(settings.imposterCount) || 1));
+            s.imposterCount = Math.max(1, Math.min(MAX_IMPOSTERS, parseInt(settings.imposterCount) || 1));
         }
         if (settings.detectiveEnabled !== undefined) s.detectiveEnabled = !!settings.detectiveEnabled;
         if (settings.turnSeconds !== undefined) {
@@ -491,7 +610,18 @@ io.on('connection', (socket) => {
         if (settings.category !== undefined && CATEGORIES[settings.category]) {
             s.category = settings.category;
         }
+        if (settings.maxPlayers !== undefined) {
+            const requested = parseInt(settings.maxPlayers) || DEFAULT_ROOM_SIZE;
+            const clamped = Math.max(MIN_ROOM_SIZE, Math.min(MAX_ROOM_SIZE, requested));
+            // Xonada hozir turgan o'yinchilardan kam qilib bo'lmaydi
+            if (clamped < room.players.size) {
+                socket.emit('errorMsg', `Hozir xonada ${room.players.size} kishi bor, limitni bundan kam qilib bo'lmaydi!`);
+            } else {
+                s.maxPlayers = clamped;
+            }
+        }
         broadcastPlayers(roomId);
+        broadcastPublicRooms();
     });
 
     socket.on('toggleReady', ({ roomId }) => {
@@ -512,6 +642,7 @@ io.on('connection', (socket) => {
         room.players.delete(playerId);
         if (targetSocket) { targetSocket.emit('kicked'); targetSocket.leave(roomId); }
         broadcastPlayers(roomId);
+        broadcastPublicRooms();
     });
 
     socket.on('startGame', ({ roomId }) => {
@@ -519,9 +650,13 @@ io.on('connection', (socket) => {
         if (!room) return;
         if (socket.id !== room.hostId) { socket.emit('errorMsg', "Faqat host o'yinni boshlashi mumkin!"); return; }
 
-        const minPlayers = room.settings.imposterCount === 2 ? 5 : 3;
+        const minPlayers = MIN_PLAYERS_FOR_IMPOSTERS[room.settings.imposterCount] || MIN_ROOM_SIZE;
         if (room.players.size < minPlayers) {
             socket.emit('errorMsg', `Bu sozlamalar uchun kamida ${minPlayers} ta o'yinchi kerak!`);
+            return;
+        }
+        if (room.players.size > room.settings.maxPlayers) {
+            socket.emit('errorMsg', `Xonada limitdan ko'p o'yinchi bor!`);
             return;
         }
         const notReady = Array.from(room.players.entries()).some(([id, p]) => id !== room.hostId && !p.isReady);
@@ -544,6 +679,7 @@ io.on('connection', (socket) => {
 
         room.started = true;
         room.word = word;
+        room.wordRevealed = false;
         room.imposterIds = imposterIds;
         room.voting = null;
         room.voteLockOpen = false;
@@ -565,7 +701,7 @@ io.on('connection', (socket) => {
             const p = room.players.get(id);
             if (p.isImposter) {
                 s.emit('gameStarted', {
-                    role: 'FIRIBGAR', isImposter: true, word: null,
+                    role: 'JOSUS', isImposter: true, word: null,
                     isDetective: false, category: CATEGORIES[catKey].name,
                     totalImposters: room.settings.imposterCount
                 });
@@ -582,6 +718,7 @@ io.on('connection', (socket) => {
         sendSystemMessage(roomId, `O'yin boshlandi! Kategoriya: ${CATEGORIES[catKey].name}. Navbat bilan so'z ayting.`);
         buildTurnOrder(room);
         startTurn(roomId);
+        broadcastPublicRooms();
     });
 
     // ---------- NAVBAT BILAN XABAR ----------
@@ -612,9 +749,34 @@ io.on('connection', (socket) => {
 
         room.messageCounter++;
         const msgId = 'm' + room.messageCounter;
-        const payload = { type: 'player', id: msgId, nickname: player.nickname, message: trimmed, round: room.roundNumber };
-        room.recap.push({ type: 'message', round: room.roundNumber, nickname: player.nickname, message: trimmed });
+
+        // Maxfiy so'z oshkor bo'ldimi?
+        const revealsWord = !player.isImposter && messageRevealsWord(trimmed, room.word);
+        const firstReveal = revealsWord && !room.wordRevealed;
+        if (firstReveal) room.wordRevealed = true;
+
+        const payload = {
+            type: 'player', id: msgId, nickname: player.nickname,
+            message: trimmed, round: room.roundNumber,
+            revealedWord: revealsWord
+        };
+        room.recap.push({
+            type: 'message', round: room.roundNumber,
+            nickname: player.nickname, message: trimmed,
+            revealedWord: revealsWord
+        });
         io.to(roomId).emit('receiveMessage', payload);
+
+        if (firstReveal) {
+            sendSystemMessage(roomId,
+                `⚠️ ${player.nickname} maxfiy so'zni oshkor qildi! Endi josus ham so'zni biladi.`);
+            // Josuslarga so'zni ochamiz
+            room.players.forEach((p, id) => {
+                if (!p.isImposter) return;
+                const s = io.sockets.sockets.get(id);
+                if (s) s.emit('wordRevealedToImposter', { word: room.word, by: player.nickname });
+            });
+        }
 
         advanceTurn(roomId);
     });
@@ -702,6 +864,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        onlineCount = Math.max(0, onlineCount - 1);
+        broadcastOnlineCount();
+
         for (const [roomId, room] of rooms.entries()) {
             if (!room.players.has(socket.id)) continue;
             const leaving = room.players.get(socket.id);
@@ -709,14 +874,14 @@ io.on('connection', (socket) => {
             const wasTheirTurn = currentTurnPlayerId(room) === socket.id;
             room.players.delete(socket.id);
 
-            if (room.players.size === 0) { clearRoomTimers(room); rooms.delete(roomId); continue; }
+            if (room.players.size === 0) { clearRoomTimers(room); rooms.delete(roomId); broadcastPublicRooms(); continue; }
             if (wasHost) room.hostId = room.players.keys().next().value;
 
             if (room.started) {
                 const crewLeft = Array.from(room.players.values()).filter(p => !p.isImposter && !p.isMuted).length;
                 const impLeft = Array.from(room.players.values()).filter(p => p.isImposter).length;
 
-                if (impLeft === 0 || room.players.size < 3 || crewLeft < 1) {
+                if (impLeft === 0 || room.players.size < MIN_ROOM_SIZE || crewLeft < 1) {
                     resetRoomToLobby(roomId, `${leaving.nickname} chiqib ketdi. O'yin bekor qilindi.`);
                 } else {
                     room.turnOrder = room.turnOrder.filter(id => id !== socket.id);
@@ -731,6 +896,7 @@ io.on('connection', (socket) => {
                 broadcastPlayers(roomId);
                 sendSystemMessage(roomId, `${leaving.nickname} xonadan chiqib ketdi.`);
             }
+            broadcastPublicRooms();
         }
     });
 });

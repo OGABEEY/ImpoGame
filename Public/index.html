@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firibgarni top</title>
+<title>Josusni top</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,12 +23,16 @@
   <div class="hero">
     <h1>🎮 Bosh Menu</h1>
     <p class="subtitle">Maroqli hordiq tilaymiz!!!</p>
+    <div class="online-pill">
+      <span class="online-dot"></span>
+      <span id="onlineCountText">Ulanmoqda...</span>
+    </div>
   </div>
   <div class="game-grid">
     <div class="game-card featured" id="goToImposter">
       <div class="game-card-icon">🕵️</div>
-      <h3>Firibgarni top</h3>
-      <p>⚠️ Navbat bilan kalit so'zga bog'liq so'z ayting. Firibgarga so'z berilmaydi — uni fosh eting! KALIT SO'ZNI HECHKIMGA AYTMANG!</p>
+      <h3>Josusni top</h3>
+      <p>⚠️ Navbat bilan kalit so'zga bog'liq so'z ayting. Josusga so'z berilmaydi — uni fosh eting! KALIT SO'ZNI HECHKIMGA AYTMANG!</p>
       <span class="play-tag">O'ynash ➡️</span>
     </div>
     <div class="game-card disabled">
@@ -47,25 +51,53 @@
 <!-- ===================== IMPOSTER MENU ===================== -->
 <div id="imposter-menu" class="screen">
   <button class="back-btn" id="backToMainFromMenu">← Orqaga</button>
-  <div class="panel form-panel single-panel">
-    <h2>🕵️ Firibgarni top</h2>
-    <p class="panel-desc">Xona yarating yoki mavjud xonaga qo'shiling</p>
+  <div class="menu-layout">
 
-    <div class="field">
-      <label>Nickname</label>
-      <input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16">
+    <div class="panel form-panel">
+      <h2>🕵️ Josusni top</h2>
+      <p class="panel-desc">Xona yarating yoki mavjud xonaga qo'shiling</p>
+
+      <div class="field">
+        <label>Nickname</label>
+        <input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16">
+      </div>
+
+      <div class="field">
+        <label>Xona nomi (ixtiyoriy)</label>
+        <input type="text" id="roomNameInput" placeholder="Masalan: Do'stlar davrasi" maxlength="24">
+      </div>
+
+      <div class="field">
+        <label>Xona turi</label>
+        <select id="roomVisibility">
+          <option value="public">🌍 Ochiq — ro'yxatda ko'rinadi</option>
+          <option value="private">🔒 Yopiq — faqat kod orqali</option>
+        </select>
+      </div>
+
+      <div class="action-block">
+        <button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button>
+      </div>
+
+      <div class="divider"><span>yoki kod bilan</span></div>
+
+      <div class="action-block join-block">
+        <input type="text" id="roomIdInput" placeholder="Xona kodi" maxlength="5">
+        <button id="joinLobbyBtn" class="btn btn-secondary">🔑 Qo'shilish</button>
+      </div>
     </div>
 
-    <div class="action-block">
-      <button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button>
+    <div class="panel browser-panel">
+      <div class="browser-head">
+        <h3 class="col-title">🌍 Ochiq xonalar</h3>
+        <button id="refreshRoomsBtn" class="icon-btn" title="Yangilash">🔄</button>
+      </div>
+      <p class="panel-desc small">Kodsiz to'g'ridan-to'g'ri qo'shiling</p>
+      <div id="publicRoomsList">
+        <p class="empty-note">Yuklanmoqda...</p>
+      </div>
     </div>
 
-    <div class="divider"><span>yoki</span></div>
-
-    <div class="action-block join-block">
-      <input type="text" id="roomIdInput" placeholder="Xona kodi" maxlength="5">
-      <button id="joinLobbyBtn" class="btn btn-secondary">🔑 Qo'shilish</button>
-    </div>
   </div>
 </div>
 
@@ -74,11 +106,15 @@
   <div class="lobby-header">
     <h2>Xona kodi: <span id="roomIdDisplay">-----</span></h2>
     <p class="lobby-hint">Do'stlaringizga shu kodni yuboring</p>
+    <div class="visibility-row">
+      <span id="visibilityBadge" class="vis-badge">🔒 Yopiq xona</span>
+      <button id="toggleVisibilityBtn" class="btn btn-secondary vis-btn" style="display:none;">🌍 Ochiq qilish</button>
+    </div>
   </div>
 
   <div class="lobby-layout">
     <div class="lobby-col">
-      <h3 class="col-title">👥 O'yinchilar</h3>
+      <h3 class="col-title">👥 O'yinchilar <span id="playerCountBadge" class="count-badge">0/10</span></h3>
       <ul id="playerList"></ul>
 
       <div class="lobby-actions">
@@ -96,10 +132,11 @@
 
           <div class="rules-section">
             <h4>🎯 Maqsad</h4>
-            <p>Barcha ishtirokchilarga bitta <b>maxfiy so'z</b> beriladi. Firibgar bu so'zni bilmaydi — u boshqalarning gaplariga qarab so'zni topishga va o'zini oshkor qilmaslikka harakat qiladi.</p>
+            <p>Barcha ishtirokchilarga bitta <b>maxfiy so'z</b> beriladi. Josus bu so'zni bilmaydi — u boshqalarning gaplariga qarab so'zni topishga va o'zini oshkor qilmaslikka harakat qiladi.</p>
             <ul class="rules-list">
-              <li><b>Jamoa yutadi</b> — agar ovoz berish orqali firibgarni fosh etsangiz.</li>
-              <li><b>Firibgar yutadi</b> — agar tirik ishtirokchilar soni firibgarlar soniga tenglashsa.</li>
+              <li><b>Jamoa yutadi</b> — agar ovoz berish orqali josusni fosh etsangiz.</li>
+              <li><b>Josus yutadi</b> — agar tirik ishtirokchilar soni josuslar soniga tenglashsa.</li>
+              <li>Bitta xonada <b>3 tadan 9 tagacha</b> o'yinchi bo'ladi, josuslar soni <b>1 tadan 3 tagacha</b> (hostning sozlamasiga qarab).</li>
             </ul>
           </div>
 
@@ -116,10 +153,24 @@
           <div class="rules-section">
             <h4>⚠️ Muhim eslatmalar</h4>
             <ul class="rules-list">
-              <li>Maxfiy so'zni <b>to'g'ridan-to'g'ri yozmang</b> — firibgar darrov bilib oladi!</li>
-              <li>Juda aniq so'z aytsangiz firibgarga yordam berasiz, juda umumiy aytsangiz o'zingizga shubha tushadi.</li>
+              <li>Maxfiy so'zni <b>to'g'ridan-to'g'ri yozmang</b> — josus darrov bilib oladi!</li>
+              <li>Juda aniq so'z aytsangiz josusga yordam berasiz, juda umumiy aytsangiz o'zingizga shubha tushadi.</li>
               <li>Reaksiya emojilari (👍 😂 🤔 😱 🧐) bilan boshqalarning so'zlariga munosabat bildiring.</li>
             </ul>
+          </div>
+
+          <div class="rules-section">
+            <h4>🚨 So'z oshkor bo'lishi</h4>
+            <div class="reveal-rule-box">
+              <p><b>Agar ishtirokchi yoki detektiv maxfiy so'zni yozib yuborsa:</b></p>
+              <ul class="rules-list">
+                <li>Chatda hammaga <b>ogohlantirish</b> chiqadi.</li>
+                <li>Josusga maxfiy so'z <b>ochib beriladi</b> — endi u ham so'zni biladi!</li>
+                <li>Bu xabar o'yin tarixida ⚠️ belgisi bilan qoladi — kim aybdor ekani oxirida ko'rinadi.</li>
+              </ul>
+              <p class="reveal-rule-note">📌 So'zning qo'shimchali shakli ham hisoblanadi: masalan so'z <b>"olma"</b> bo'lsa, <b>"olmalar"</b> yoki <b>"olmani"</b> deb yozish ham oshkor qilish sanaladi.</p>
+              <p class="reveal-rule-ok">✅ <b>Josus</b> maxfiy so'zni topib aytsa — hech narsa bo'lmaydi, ogohlantirish chiqmaydi. Bu uning maqsadi!</p>
+            </div>
           </div>
 
           <div class="rules-section">
@@ -127,17 +178,17 @@
 
             <div class="role-card role-card-crew">
               <div class="role-card-head">👤 <b>Ishtirokchi</b></div>
-              <p>Maxfiy so'zni biladi. Vazifasi — so'zga bog'liq so'z aytib, o'zi ishtirokchi ekanini isbotlash va firibgarni topish.</p>
+              <p>Maxfiy so'zni biladi. Vazifasi — so'zga bog'liq so'z aytib, o'zi ishtirokchi ekanini isbotlash va josusni topish.</p>
             </div>
 
             <div class="role-card role-card-imposter">
-              <div class="role-card-head">🕵️ <b>Firibgar</b></div>
+              <div class="role-card-head">🕵️ <b>Josus</b></div>
               <p>Maxfiy so'zni <b>bilmaydi</b>. Vazifasi — boshqalarning gaplaridan so'zni taxmin qilib, ishonarli so'z aytish va oxirigacha fosh bo'lmaslik.</p>
             </div>
 
             <div class="role-card role-card-detective">
               <div class="role-card-head">🔍 <b>Detektiv</b></div>
-              <p>Maxfiy so'zni biladi (ishtirokchi kabi). Qo'shimcha imkoniyat: o'yin davomida <b>bir marta</b> istalgan o'yinchini tekshirib, uning firibgar yoki yo'qligini <b>maxfiy</b> bilib oladi. Natijani faqat o'zi ko'radi.</p>
+              <p>Maxfiy so'zni biladi (ishtirokchi kabi). Qo'shimcha imkoniyat: o'yin davomida <b>bir marta</b> istalgan o'yinchini tekshirib, uning josus yoki yo'qligini <b>maxfiy</b> bilib oladi. Natijani faqat o'zi ko'radi.</p>
             </div>
 
             <div class="role-card role-card-ghost">
@@ -150,12 +201,12 @@
             <h4>🏆 Yutuqlar</h4>
             <div class="ach-grid">
               <span><b>🎉 Birinchi g'alaba</b><em>Birinchi marta g'alaba qozonish</em></span>
-              <span><b>🕵️ Mohir firibgar</b><em>Firibgar sifatida yutish</em></span>
-              <span><b>🔍 Sherlock</b><em>Firibgarga to'g'ri ovoz berish</em></span>
+              <span><b>🕵️ Mohir josus</b><em>Josus sifatida yutish</em></span>
+              <span><b>🔍 Sherlock</b><em>Josusga to'g'ri ovoz berish</em></span>
               <span><b>🛡️ Omon qolgan</b><em>Susdirilmasdan yutish</em></span>
               <span><b>🔥 Uch karra</b><em>Ketma-ket 3 marta yutish</em></span>
               <span><b>👻 Arvoh</b><em>Arvoh holida jamoang yutsa</em></span>
-              <span><b>🎖️ Detektiv ishi</b><em>Detektiv firibgarni tekshirsa</em></span>
+              <span><b>🎖️ Detektiv ishi</b><em>Detektiv josusni tekshirsa</em></span>
               <span><b>⭐ Faxriy</b><em>Xonada 5 ta o'yin o'ynash</em></span>
             </div>
           </div>
@@ -174,10 +225,23 @@
           <select id="setCategory" class="host-control"></select>
         </div>
         <div class="setting-row">
-          <label>Firibgarlar soni</label>
+          <label>Maksimal o'yinchilar</label>
+          <select id="setMaxPlayers" class="host-control">
+            <option value="3">3 kishi</option>
+            <option value="4">4 kishi</option>
+            <option value="5">5 kishi</option>
+            <option value="6">6 kishi</option>
+            <option value="7">7 kishi</option>
+            <option value="8">8 kishi</option>
+            <option value="9">9 kishi</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Josuslar soni</label>
           <select id="setImposterCount" class="host-control">
-            <option value="1">1 ta</option>
+            <option value="1">1 ta (3+ o'yinchi)</option>
             <option value="2">2 ta (5+ o'yinchi)</option>
+            <option value="3">3 ta (7+ o'yinchi)</option>
           </select>
         </div>
         <div class="setting-row">

@@ -50,6 +50,32 @@ body {
 .back-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.9rem; margin-bottom: 20px; }
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
 .single-panel { max-width: 460px; margin: 0 auto; }
+.panel-desc.small { font-size: 0.8rem; margin-bottom: 14px; }
+
+/* ===== MENU LAYOUT (yaratish + ochiq xonalar) ===== */
+.menu-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 780px) { .menu-layout { grid-template-columns: 1fr; } }
+
+.browser-head { display: flex; align-items: center; justify-content: space-between; }
+.browser-head .col-title { margin: 0; }
+#publicRoomsList { max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+
+.room-card { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; }
+.room-card.room-busy { opacity: 0.6; }
+.room-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+.room-name { font-weight: 600; font-size: 0.92rem; }
+.room-status { font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+.status-open { background: #05966955; color: #6ee7b7; }
+.status-busy { background: #f43f5e44; color: #fda4af; }
+.room-meta { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 9px; }
+.room-join-btn { width: 100%; padding: 8px; font-size: 0.85rem; }
+
+/* ===== XONA TURI (lobby) ===== */
+.visibility-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.vis-badge { font-size: 0.78rem; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); }
+.vis-public { background: #05966933; color: #6ee7b7; border-color: var(--success); }
+.vis-private { background: #78716c33; color: #d6d3d1; }
+.vis-btn { width: auto; padding: 6px 12px; font-size: 0.78rem; }
 .panel h2 { margin-top: 0; }
 .panel-desc { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 22px; }
 .field { margin-bottom: 18px; }
@@ -263,3 +289,83 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 .tab-content .ach-wrap:focus-within .ach-tooltip {
   transform: translateX(-50%) translateY(0);
 }
+
+/* ===== O'YINCHILAR SONI KO'RSATKICHI ===== */
+.count-badge {
+  font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+  background: var(--bg-alt); border: 1px solid var(--border); color: var(--text-dim);
+  margin-left: 6px; vertical-align: middle;
+}
+.count-badge.count-full { background: #f43f5e33; border-color: var(--danger); color: #fda4af; }
+.status-full { background: #fbbf2444; color: #fde68a; }
+
+/* ===== ONLAYN HISOBLAGICH ===== */
+.online-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 6px 14px; border-radius: 999px; margin-top: 14px;
+  font-size: 0.82rem; color: var(--text-dim);
+}
+.online-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--success); box-shadow: 0 0 0 0 rgba(52,211,153,0.6);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52,211,153,0.6); }
+  70%  { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
+  100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+}
+
+/* ===== MAXFIY SO'Z OSHKOR BO'LDI ===== */
+.reveal-warning {
+  background: #fbbf2422;
+  border: 1px solid var(--warning);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 0.76rem;
+  color: #fde68a;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.chat-msg.msg-revealed {
+  border-left: 3px solid var(--warning);
+  padding-left: 9px;
+}
+.role-badge.role-revealed {
+  border-color: var(--warning);
+  background: #fbbf2422;
+  animation: revealFlash 1.2s ease-out;
+}
+@keyframes revealFlash {
+  0%   { background: #fbbf2288; }
+  100% { background: #fbbf2422; }
+}
+.recap-line.recap-revealed { color: #fde68a; }
+
+/* ===== QOIDALARDAGI OSHKOR BO'LISH BLOKI ===== */
+.reveal-rule-box {
+  background: #fbbf2415;
+  border: 1px solid var(--warning);
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+.reveal-rule-box > p:first-child { color: #fde68a; margin-bottom: 6px; }
+.reveal-rule-box .rules-list { margin-bottom: 8px; }
+.reveal-rule-note {
+  font-size: 0.77rem !important;
+  border-top: 1px solid #fbbf2433;
+  padding-top: 7px;
+  margin-top: 7px !important;
+  margin-bottom: 6px !important;
+}
+.reveal-rule-ok {
+  font-size: 0.79rem !important;
+  color: #6ee7b7 !important;
+  background: #05966922;
+  border-radius: 7px;
+  padding: 6px 9px;
+  margin: 0 !important;
+}
+.reveal-rule-ok b { color: #a7f3d0 !important; }

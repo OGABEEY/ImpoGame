@@ -22,8 +22,8 @@ function startTelegramBot() {
     const inviteKeyboard = new InlineKeyboard().url("🎮 O'yinni ochish", gameLink);
 
     const inviteText =
-        "🕵️ *Firibgarni top*\n\n" +
-        "Guruhdagi do'stlaringiz bilan xona yarating, kalit so'zga bog'liq so'zlarni chatga yozib, orangizdagi firibgarni toping!\n\n" +
+        "🕵️ *Josusni top*\n\n" +
+        "Guruhdagi do'stlaringiz bilan xona yarating, kalit so'zga bog'liq so'zlarni chatga yozib, orangizdagi josusni toping!\n\n" +
         "Boshlash uchun pastdagi tugmani bosing 👇";
 
     // ---------- /impogame buyrug'i (guruh yoki shaxsiy chatda) ----------
@@ -46,7 +46,7 @@ function startTelegramBot() {
 
         const welcomeText =
             "👋 Salom hammaga!\n\n" +
-            "Men *Firibgarni top* o'yiniga taklif qilaman — orangizda kim firibgar ekanini toping! 🕵️\n\n" +
+            "Men *Josusni top* o'yiniga taklif qilaman — orangizda kim josus ekanini toping! 🕵️\n\n" +
             "Istalgan vaqt o'ynash uchun /impogame deb yozing yoki pastdagi tugmani bosing 👇";
 
         await ctx.reply(welcomeText, { parse_mode: 'Markdown', reply_markup: inviteKeyboard });

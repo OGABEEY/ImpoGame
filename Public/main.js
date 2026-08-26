@@ -46,14 +46,23 @@ document.getElementById('nicknameInput').addEventListener('change', (e) => {
 });
 
 // ==================== NAVIGATSIYA ====================
-document.getElementById('goToImposter').addEventListener('click', () => showScreen('imposterMenu'));
-document.getElementById('backToMainFromMenu').addEventListener('click', () => showScreen('mainMenu'));
+document.getElementById('goToImposter').addEventListener('click', () => {
+  showScreen('imposterMenu');
+  socket.emit('browsePublicRooms');
+});
+document.getElementById('backToMainFromMenu').addEventListener('click', () => {
+  showScreen('mainMenu');
+  socket.emit('stopBrowsing');
+});
+document.getElementById('refreshRoomsBtn').addEventListener('click', () => socket.emit('browsePublicRooms'));
 
 document.getElementById('createLobbyBtn').addEventListener('click', () => {
   const val = document.getElementById('nicknameInput').value.trim();
   if (!val) { alert('Nickname kiriting!'); return; }
   nickname = val; saveNickname(val); refreshNicknameBadge();
-  socket.emit('createLobby', { nickname });
+  const isPublic = document.getElementById('roomVisibility').value === 'public';
+  const roomName = document.getElementById('roomNameInput').value.trim();
+  socket.emit('createLobby', { nickname, isPublic, roomName });
 });
 
 document.getElementById('joinLobbyBtn').addEventListener('click', () => {
@@ -76,12 +85,102 @@ function enterLobby(roomId) {
 socket.on('kicked', () => { alert("Siz xonadan chiqarib yuborildingiz."); location.reload(); });
 socket.on('errorMsg', (msg) => alert(msg));
 
+// ==================== ONLAYN HISOBLAGICH ====================
+socket.on('onlineCount', ({ count, rooms: roomCount }) => {
+  const el = document.getElementById('onlineCountText');
+  if (!el) return;
+  const roomPart = roomCount > 0 ? ` · ${roomCount} ta xona` : '';
+  el.textContent = `${count} kishi onlayn${roomPart}`;
+});
+
+socket.on('connect', () => socket.emit('getOnlineCount'));
+
+// ==================== OCHIQ XONALAR RO'YXATI ====================
+socket.on('publicRoomsUpdate', ({ rooms: list }) => {
+  const box = document.getElementById('publicRoomsList');
+  box.innerHTML = '';
+
+  if (!list || list.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'empty-note';
+    p.textContent = "Hozircha ochiq xona yo'q — birinchi bo'lib yarating!";
+    box.appendChild(p);
+    return;
+  }
+
+  list.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'room-card' + ((r.started || r.isFull) ? ' room-busy' : '');
+
+    const top = document.createElement('div');
+    top.className = 'room-top';
+
+    const nm = document.createElement('span');
+    nm.className = 'room-name';
+    nm.textContent = r.name;
+    top.appendChild(nm);
+
+    const status = document.createElement('span');
+    const statusClass = r.started ? 'status-busy' : (r.isFull ? 'status-full' : 'status-open');
+    status.className = 'room-status ' + statusClass;
+    status.textContent = r.started ? "O'yin ketmoqda" : (r.isFull ? "To'lgan" : 'Kutmoqda');
+    top.appendChild(status);
+    card.appendChild(top);
+
+    const meta = document.createElement('div');
+    meta.className = 'room-meta';
+    meta.textContent = `👥 ${r.playerCount}/${r.maxPlayers} · 🏷️ ${r.category} · 🕵️ ${r.imposterCount} ta` +
+      (r.detectiveEnabled ? ' · 🔍 detektiv' : '');
+    card.appendChild(meta);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-secondary room-join-btn';
+    if (r.started) {
+      btn.textContent = 'Band';
+      btn.disabled = true;
+    } else if (r.isFull) {
+      btn.textContent = "To'lgan";
+      btn.disabled = true;
+    } else {
+      btn.textContent = '➡️ Qo\'shilish';
+      btn.addEventListener('click', () => {
+        const val = document.getElementById('nicknameInput').value.trim();
+        if (!val) { alert('Avval nickname kiriting!'); return; }
+        nickname = val; saveNickname(val); refreshNicknameBadge();
+        socket.emit('joinLobby', { roomId: r.roomId, nickname });
+      });
+    }
+    card.appendChild(btn);
+    box.appendChild(card);
+  });
+});
+
+// ==================== XONA TURINI O'ZGARTIRISH (host) ====================
+let roomIsPublic = false;
+document.getElementById('toggleVisibilityBtn').addEventListener('click', () => {
+  socket.emit('toggleRoomVisibility', { roomId: currentRoomId, isPublic: !roomIsPublic });
+});
+
+function renderVisibility(isPublic, isHostNow) {
+  roomIsPublic = isPublic;
+  const badge = document.getElementById('visibilityBadge');
+  const btn = document.getElementById('toggleVisibilityBtn');
+
+  badge.textContent = isPublic ? '🌍 Ochiq xona' : '🔒 Yopiq xona';
+  badge.className = 'vis-badge ' + (isPublic ? 'vis-public' : 'vis-private');
+
+  btn.style.display = isHostNow ? 'inline-block' : 'none';
+  btn.textContent = isPublic ? '🔒 Yopiq qilish' : '🌍 Ochiq qilish';
+}
+
 // ==================== LOBBY ====================
 let categoriesLoaded = false;
 
-socket.on('updatePlayers', ({ players, hostId, settings, categories, leaderboard }) => {
+socket.on('updatePlayers', ({ players, hostId, settings, categories, leaderboard, isPublic, roomName }) => {
   myPlayers = players;
   isHost = (socket.id === hostId);
+
+  renderVisibility(!!isPublic, isHost);
 
   // Kategoriyalar ro'yxati
   if (!categoriesLoaded && categories) {
@@ -98,6 +197,7 @@ socket.on('updatePlayers', ({ players, hostId, settings, categories, leaderboard
   // Sozlamalarni ko'rsatish
   if (settings) {
     document.getElementById('setCategory').value = settings.category;
+    document.getElementById('setMaxPlayers').value = String(settings.maxPlayers);
     document.getElementById('setImposterCount').value = String(settings.imposterCount);
     document.getElementById('setDetective').value = String(settings.detectiveEnabled);
     document.getElementById('setTurnSeconds').value = String(settings.turnSeconds);
@@ -146,18 +246,24 @@ socket.on('updatePlayers', ({ players, hostId, settings, categories, leaderboard
     list.appendChild(li);
   });
 
+  const cap = settings ? settings.maxPlayers : 10;
+  const badge = document.getElementById('playerCountBadge');
+  badge.textContent = `${players.length}/${cap}`;
+  badge.className = 'count-badge' + (players.length >= cap ? ' count-full' : '');
+
   document.getElementById('startGameBtn').style.display = isHost ? 'block' : 'none';
   renderLeaderboard(leaderboard, document.getElementById('leaderboardBox'));
 });
 
 // Sozlama o'zgarishlari
-['setCategory','setImposterCount','setDetective','setTurnSeconds','setVoteSeconds'].forEach(id => {
+['setCategory','setMaxPlayers','setImposterCount','setDetective','setTurnSeconds','setVoteSeconds'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => {
     if (!isHost) return;
     socket.emit('updateSettings', {
       roomId: currentRoomId,
       settings: {
         category: document.getElementById('setCategory').value,
+        maxPlayers: document.getElementById('setMaxPlayers').value,
         imposterCount: document.getElementById('setImposterCount').value,
         detectiveEnabled: document.getElementById('setDetective').value === 'true',
         turnSeconds: document.getElementById('setTurnSeconds').value,
@@ -233,8 +339,8 @@ socket.on('gameStarted', ({ role, isImposter, word, isDetective: det, category, 
 
   const roleDisplay = document.getElementById('roleDisplay');
   if (isImposter) {
-    roleDisplay.innerHTML = `🕵️ <b>FIRIBGAR</b> · ${category}` +
-      (totalImposters > 1 ? ` · ${totalImposters} ta firibgar bor` : '');
+    roleDisplay.innerHTML = `🕵️ <b>JOSUS</b> · ${category}` +
+      (totalImposters > 1 ? ` · ${totalImposters} ta josus bor` : '');
     roleDisplay.className = 'role-badge role-imposter';
   } else if (det) {
     roleDisplay.innerHTML = `🔍 <b>DETEKTIV</b> · So'z: <b>${word}</b>`;
@@ -246,6 +352,25 @@ socket.on('gameStarted', ({ role, isImposter, word, isDetective: det, category, 
 
   document.getElementById('detectiveBtn').style.display = det ? 'inline-block' : 'none';
   document.getElementById('detectiveBtn').disabled = false;
+
+  // Shaxsiy rol xabari (faqat o'zi ko'radi)
+  if (isImposter) {
+    appendMessage({
+      type: 'system',
+      message: `🕵️ Siz JOSUSsiz! Maxfiy so'z sizga berilmaydi — boshqalarning gaplaridan uni topishga harakat qiling va fosh bo'lmang.`
+    });
+  } else if (det) {
+    appendMessage({
+      type: 'system',
+      message: `🔍 Siz DETEKTIVsiz! Maxfiy so'z: "${word}". Bir marta istalgan o'yinchini tekshirib, uning josus ekanini bilib olishingiz mumkin.`
+    });
+  } else {
+    appendMessage({
+      type: 'system',
+      message: `👤 Siz ISHTIROKCHIsiz! Maxfiy so'z: "${word}". So'zni to'g'ridan-to'g'ri yozmang — aks holda josus ham uni bilib oladi!`
+    });
+  }
+
   const voteBtn = document.getElementById('voteBtn');
   voteBtn.disabled = true;
   voteBtn.textContent = '🗳️ Ovoz berish';
@@ -335,6 +460,14 @@ function appendMessage(payload) {
     div.className = 'chat-msg';
     div.dataset.msgId = payload.id;
 
+    if (payload.revealedWord) {
+      const warn = document.createElement('div');
+      warn.className = 'reveal-warning';
+      warn.textContent = "⚠️ Maxfiy so'z oshkor qilindi — endi josus ham ushbu so'zni biladi!";
+      div.appendChild(warn);
+      div.classList.add('msg-revealed');
+    }
+
     const head = document.createElement('div');
     const s = document.createElement('span');
     s.className = 'sender'; s.textContent = payload.nickname + ': ';
@@ -389,6 +522,17 @@ function sendChatMessage() {
 document.getElementById('sendMessageBtn').addEventListener('click', sendChatMessage);
 document.getElementById('messageInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
 
+// ==================== MAXFIY SO'Z OSHKOR BO'LDI (josus uchun) ====================
+socket.on('wordRevealedToImposter', ({ word, by }) => {
+  const roleDisplay = document.getElementById('roleDisplay');
+  roleDisplay.innerHTML = `🕵️ <b>JOSUS</b> · So'z fosh bo'ldi: <b>${word}</b>`;
+  roleDisplay.className = 'role-badge role-imposter role-revealed';
+  appendMessage({
+    type: 'system',
+    message: `🎯 ${by} maxfiy so'zni oshkor qildi! So'z: "${word}" — endi siz ham bilasiz.`
+  });
+});
+
 // ==================== ARVOH ====================
 socket.on('playerMuted', () => {
   isMuted = true; isMyTurn = false;
@@ -438,7 +582,7 @@ socket.on('detectiveResult', ({ nickname: target, isImposter: imp }) => {
   appendMessage({
     type: 'system',
     message: imp
-      ? `🔍 TEKSHIRUV NATIJASI: ${target} — FIRIBGAR! (faqat siz ko'rasiz)`
+      ? `🔍 TEKSHIRUV NATIJASI: ${target} — JOSUS! (faqat siz ko'rasiz)`
       : `🔍 TEKSHIRUV NATIJASI: ${target} — oddiy ishtirokchi. (faqat siz ko'rasiz)`
   });
 });
@@ -494,7 +638,7 @@ socket.on('gameOver', ({ winner, message, word, imposters, recap, newAchievement
   if (voteTimerInterval) clearInterval(voteTimerInterval);
 
   document.getElementById('gameOverTitle').textContent =
-    winner === 'imposter' ? '🕵️ Firibgar yutdi!' : '🎉 Jamoa yutdi!';
+    winner === 'imposter' ? '🕵️ Josus yutdi!' : '🎉 Jamoa yutdi!';
   document.getElementById('gameOverMessage').innerHTML =
     `${message}<br>Maxfiy so'z: <b>${word}</b>`;
 
@@ -525,7 +669,7 @@ function renderRecap(recap, imposters) {
 
   const impLine = document.createElement('div');
   impLine.className = 'recap-imposters';
-  impLine.textContent = `🕵️ Firibgar${imposters.length > 1 ? 'lar' : ''}: ${imposters.join(', ')}`;
+  impLine.textContent = `🕵️ Josus${imposters.length > 1 ? 'lar' : ''}: ${imposters.join(', ')}`;
   box.appendChild(impLine);
 
   if (!recap || !recap.length) {
@@ -545,9 +689,10 @@ function renderRecap(recap, imposters) {
     }
     const d = document.createElement('div');
     if (item.type === 'message') {
-      d.className = 'recap-line';
+      d.className = 'recap-line' + (item.revealedWord ? ' recap-revealed' : '');
       const isImp = imposters.includes(item.nickname);
-      d.innerHTML = `<b>${isImp ? '🕵️ ' : ''}${item.nickname}:</b> ${escapeHtml(item.message)}`;
+      const flag = item.revealedWord ? ' ⚠️' : '';
+      d.innerHTML = `<b>${isImp ? '🕵️ ' : ''}${item.nickname}:</b> ${escapeHtml(item.message)}${flag}`;
     } else if (item.type === 'vote') {
       d.className = 'recap-vote';
       const lines = item.votes.map(v => `${v.voter} → ${v.target}`).join(' · ');
@@ -555,8 +700,8 @@ function renderRecap(recap, imposters) {
     } else if (item.type === 'eliminate') {
       d.className = 'recap-elim';
       d.textContent = item.wasImposter
-        ? `❌ ${item.nickname} chiqarildi — FIRIBGAR edi!`
-        : `❌ ${item.nickname} susdirildi — firibgar emas edi`;
+        ? `❌ ${item.nickname} chiqarildi — JOSUS edi!`
+        : `❌ ${item.nickname} susdirildi — josus emas edi`;
     } else {
       d.className = 'recap-system';
       d.textContent = item.message;
