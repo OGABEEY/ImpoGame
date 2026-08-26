@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const { Server } = require('socket.io');
+const { startTelegramBot } = require('./bot');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,21 +13,21 @@ app.use(express.static(path.join(__dirname, 'Public')));
 
 // ==================== SO'ZLAR RO'YXATI ====================
 const WORD_LIST = [
-    'Olma', 'Uzum', 'Loviya', 'Tarvuz', 'Qovun',
+    'Olma', 'Uzum', 'Behi', 'Tarvuz', 'Qovun',
     'Mashina', 'Velosiped', 'Samolyot', 'Poyezd', 'Kema',
-    'Sher', "Yo'lbars", 'Fil', 'Tulki', "Bo'ri", 'Mushuk', 'Kuchuk',
-    'Shifokor', "O'qituvchi", 'Duradgor', 'Dehqon', 'Haydovchi', 'Quruvchi', 'Dasturchi', 'Sotuvchi',
-    'Futbol', 'Basketbol', 'Shaxmat', 'Boks', 'Suzish', 'Tennis', 'KiberSport',
-    "Tog'", 'Dengiz', "Cho'l", "O'rmon", "Ko'l", 'Jar', "Cho'qqi",
-    'Telefon', 'Kompyuter', 'Televizor', 'Soat', 'Kamera', 'Muzlatgich'
+    'Sher', "Yo'lbars", 'Fil', 'Tulki', "Bo'ri",
+    'Shifokor', "O'qituvchi", 'Duradgor', 'Dehqon', 'Haydovchi',
+    'Futbol', 'Basketbol', 'Shaxmat', 'Boks', 'Suzish',
+    "Tog'", 'Dengiz', "Cho'l", "O'rmon", "Ko'l",
+    'Telefon', 'Kompyuter', 'Televizor', 'Soat', 'Kamera'
 ];
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const VOTE_DURATION_MS = 60000;
+const VOTE_DURATION_MS = 30000;
 const VOTE_UNLOCK_DELAY_MS = 30000;
 const STATS_FILE = path.join(__dirname, 'stats.json');
 
-// ==================== STATISTIKA ====================
+// ==================== STATISTIKA (fayl orqali saqlanadi) ====================
 let statsStore = new Map();
 try {
     const raw = fs.readFileSync(STATS_FILE, 'utf8');
@@ -57,6 +58,14 @@ function registerGameResult(clientIds, won) {
     saveStats();
 }
 
+/**
+ * rooms: roomId -> {
+ *   hostId, players: Map(socketId -> { nickname, clientId, isReady, isMuted, isImposter }),
+ *   started, word, imposterId, unmutedCrewCount,
+ *   voting: { votes: Map, timeout } | null,
+ *   voteLockTimeout
+ * }
+ */
 const rooms = new Map();
 
 // ==================== YORDAMCHI FUNKSIYALAR ====================
@@ -120,19 +129,8 @@ function endGame(roomId, winner, message) {
     registerGameResult(winningClientIds, true);
     registerGameResult(losingClientIds, false);
 
-    // O'yin tugagach xonani o'chirmay, qayta lobby holatiga keltiramiz
-    room.started = false;
-    room.word = null;
-    room.imposterId = null;
-    room.voting = null;
-    room.players.forEach(p => { 
-        p.isMuted = false; 
-        p.isReady = false; 
-        p.isImposter = false; 
-    });
-
     io.to(roomId).emit('gameOver', { winner, message });
-    broadcastPlayers(roomId);
+    rooms.delete(roomId);
 }
 
 function resetRoomToLobby(roomId, reasonMessage) {
@@ -168,7 +166,7 @@ function tallyVotes(roomId) {
     room.voting = null;
 
     if (maxVotes === 0 || topCandidates.length !== 1) {
-        io.to(roomId).emit('voteResult', { message: "Ovozlar teng bo'ldi. Vote jarayoni skip qilindi, hech kim chiqib ketmadi." });
+        io.to(roomId).emit('voteResult', { message: "Ovozlar teng bo'ldi. Vote jarayoni skip qilindi, hech kim susdirilmadi." });
         sendSystemMessage(roomId, "Vote skip qilindi: ovozlar teng bo'ldi.");
         scheduleVoteUnlock(roomId);
         return;
@@ -179,17 +177,17 @@ function tallyVotes(roomId) {
     if (!targetPlayer) { scheduleVoteUnlock(roomId); return; }
 
     if (targetPlayer.isImposter) {
-        const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi va u FIRIBGAR edi! 🎉`;
+        const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi va u IMPOSTER edi! 🎉`;
         io.to(roomId).emit('voteResult', { message: msg });
         sendSystemMessage(roomId, msg);
-        endGame(roomId, 'crew', `Oddiy o'yinchilar g'alaba qozondi! FIRIBGAR (${targetPlayer.nickname}) topildi.`);
+        endGame(roomId, 'crew', `Jamoa g'alaba qozondi! Imposter (${targetPlayer.nickname}) topildi.`);
         return;
     }
 
     targetPlayer.isMuted = true;
     room.unmutedCrewCount -= 1;
 
-    const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi. U oddiy o'yinchi edi.`;
+    const msg = `${targetPlayer.nickname} eng ko'p ovoz oldi. Uning chatga yozish huquqi olib qo'yildi.`;
     io.to(roomId).emit('voteResult', { message: msg });
     sendSystemMessage(roomId, msg);
 
@@ -200,7 +198,7 @@ function tallyVotes(roomId) {
 
     if (room.unmutedCrewCount <= 1) {
         const imposterPlayer = room.players.get(room.imposterId);
-        endGame(roomId, 'imposter', `FIRIBGAR g'alaba qozondi! Imposter ${imposterPlayer ? imposterPlayer.nickname : ''} edi.`);
+        endGame(roomId, 'imposter', `Imposter g'alaba qozondi! Imposter ${imposterPlayer ? imposterPlayer.nickname : ''} edi.`);
         return;
     }
 
@@ -286,7 +284,7 @@ io.on('connection', (socket) => {
         if (socket.id !== room.hostId) { socket.emit('errorMsg', "Faqat host o'yinni boshlashi mumkin!"); return; }
         if (room.players.size < 3) { socket.emit('errorMsg', "O'yinni boshlash uchun kamida 3 ta o'yinchi kerak!"); return; }
         const notReady = Array.from(room.players.entries()).some(([id, p]) => id !== room.hostId && !p.isReady);
-        if (notReady) { socket.emit('errorMsg', 'Barcha o\'yinchilar Tayyor bo\'lishi kerak!'); return; }
+        if (notReady) { socket.emit('errorMsg', '"Barcha o\'yinchilar Tayyor bo\'lishi kerak!'); return; }
 
         const playerIds = Array.from(room.players.keys());
         const imposterId = playerIds[Math.floor(Math.random() * playerIds.length)];
@@ -306,7 +304,7 @@ io.on('connection', (socket) => {
             else s.emit('gameStarted', { role: 'Ishtirokchi', word });
         });
 
-        sendSystemMessage(roomId, "O'yin boshlandi! So'zga bog'liq so'zlarni yozib, FIRIBGARni toping.");
+        sendSystemMessage(roomId, "O'yin boshlandi! So'zga bog'liq so'zlarni yozib, imposterni toping.");
         scheduleVoteUnlock(roomId);
     });
 
@@ -324,18 +322,18 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomId);
         if (!room || !room.started) return;
         const player = room.players.get(socket.id);
-        
-        if (!player || player.isMuted) { 
-            socket.emit('errorMsg', "O'yindan chiqarilgansiz, ovoz berishni boshlay olmaysiz!"); 
-            return; 
-        }
-
+        if (!player) return;
+        if (player.isMuted) { socket.emit('errorMsg', "Sizning chatga yozish huquqingiz olib qo'yilgan, ovoz berish jarayonida qatnasha olmaysiz!"); return; }
         if (room.voting) { socket.emit('errorMsg', 'Ovoz berish allaqachon boshlangan!'); return; }
         if (room.voteLockTimeout) { socket.emit('errorMsg', 'Hali ovoz berishni boshlash vaqti kelmadi!'); return; }
 
         room.voting = { votes: new Map(), timeout: setTimeout(() => tallyVotes(roomId), VOTE_DURATION_MS) };
-        io.to(roomId).emit('openVoteModalForAll', {
-            players: getPlayersArray(room).filter(p => !p.isMuted)
+        const candidates = getPlayersArray(room).filter(p => !p.isMuted);
+        // Modal faqat hali muted bo'lmagan o'yinchilarga ko'rsatiladi
+        room.players.forEach((p, id) => {
+            if (p.isMuted) return;
+            const s = io.sockets.sockets.get(id);
+            if (s) s.emit('openVoteModalForAll', { players: candidates });
         });
         sendSystemMessage(roomId, `${player.nickname} ovoz berishni boshladi! 30 soniya vaqt bor.`);
     });
@@ -343,20 +341,15 @@ io.on('connection', (socket) => {
     socket.on('castVote', ({ roomId, targetId }) => {
         const room = rooms.get(roomId);
         if (!room || !room.voting) return;
-
         const voter = room.players.get(socket.id);
         const target = room.players.get(targetId);
-
         if (!voter || voter.isMuted || !target || target.isMuted) return;
         if (targetId === socket.id) return;
 
         room.voting.votes.set(socket.id, targetId);
 
-        const activePlayersCount = Array.from(room.players.values()).filter(p => !p.isMuted).length;
-
-        if (room.voting.votes.size >= activePlayersCount) {
-            tallyVotes(roomId);
-        }
+        const eligibleVoterCount = Array.from(room.players.values()).filter(p => !p.isMuted).length;
+        if (room.voting.votes.size >= eligibleVoterCount) tallyVotes(roomId);
     });
 
     socket.on('disconnect', () => {
@@ -381,3 +374,4 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server ${PORT}-portda ishga tushdi`));
+startTelegramBot();

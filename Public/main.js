@@ -192,7 +192,6 @@ socket.on('gameStarted', ({ role, word }) => {
 
   document.getElementById('messageInput').disabled = false;
   document.getElementById('sendMessageBtn').disabled = false;
-  document.getElementById('messageInput').placeholder = "Xabaringizni yozing...";
 });
 
 function startVoteCooldownUI(seconds) {
@@ -258,7 +257,7 @@ function sendChatMessage() {
 socket.on('playerMuted', () => {
   document.getElementById('messageInput').disabled = true;
   document.getElementById('sendMessageBtn').disabled = true;
-  document.getElementById('messageInput').placeholder = "Siz chiqarib yuborildingiz";
+  document.getElementById('messageInput').placeholder = "Sizning yozish huquqingiz olib qo'yildi";
 });
 
 // ==================== OVOZ BERISH ====================
@@ -300,16 +299,13 @@ socket.on('gameOver', ({ winner, message }) => {
   document.getElementById('gameOverModal').classList.add('active');
 });
 
-// O'yin tugaganda modalni yopib, XONA MENYUSIGA (Lobby) qaytarish
 document.getElementById('gameOverCloseBtn').addEventListener('click', () => {
-  document.getElementById('gameOverModal').classList.remove('active');
-  socket.emit('getStats', { clientId }); // Statistikani yangilash
-  showScreen('lobby');
+  location.reload();
 });
 
 socket.on('playerLeftGameOver', ({ message }) => {
   alert(message);
-  showScreen('lobby');
+  location.reload();
 });
 
 // ==================== BOSHLANG'ICH YUKLASH ====================
