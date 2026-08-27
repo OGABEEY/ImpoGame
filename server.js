@@ -10,6 +10,17 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'Public')));
 
+// Uptime xizmatlari (UptimeRobot, cron-job.org) shu manzilni ping qiladi.
+// Butun sahifani yuklamaydi — juda yengil javob qaytaradi.
+app.get('/healthz', (req, res) => {
+    res.status(200).json({
+        ok: true,
+        online: onlineCount,
+        rooms: rooms.size,
+        uptime: Math.floor(process.uptime())
+    });
+});
+
 // ==================== SO'ZLAR (KATEGORIYALAR BO'YICHA) ====================
 const CATEGORIES = {
     aralash: {
