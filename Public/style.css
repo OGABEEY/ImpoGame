@@ -369,3 +369,63 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   margin: 0 !important;
 }
 .reveal-rule-ok b { color: #a7f3d0 !important; }
+
+/* ===================== V4: ROLLAR VA TUN ===================== */
+.phase-badge{background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:8px 16px;font-size:.85rem;font-weight:600}
+.phase-day{background:#fbbf2422;border-color:var(--warning);color:#fde68a}
+.phase-night{background:#4338ca33;border-color:#6366f1;color:#c7d2fe}
+.phase-vote{background:#f43f5e22;border-color:var(--danger);color:#fda4af}
+
+.role-team-crew{border-color:var(--success);background:#05966922}
+.role-team-josus{border-color:var(--danger);background:#f43f5e22}
+.role-team-neutral{border-color:var(--warning);background:#fbbf2422}
+
+.team-tag{font-size:.65rem;padding:2px 7px;border-radius:999px;margin-left:5px}
+.team-crew{background:#05966955;color:#6ee7b7}
+.team-josus{background:#f43f5e55;color:#fda4af}
+.team-neutral{background:#fbbf2455;color:#fde68a}
+
+.turn-banner.night-banner{background:#4338ca33;border-color:#6366f1;color:#c7d2fe}
+
+/* O'yin tanasi: chat + yon panel */
+.game-body{display:grid;grid-template-columns:1fr 260px;gap:14px;align-items:start}
+@media(max-width:820px){.game-body{grid-template-columns:1fr}}
+.game-main{display:flex;flex-direction:column}
+.game-side{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.side-title{margin:0 0 9px;font-size:.85rem;color:var(--text-dim)}
+#livePlayerList{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:5px}
+.live-player{display:flex;justify-content:space-between;align-items:center;background:var(--bg-alt);border-radius:8px;padding:6px 10px;font-size:.83rem}
+.live-player.dead{opacity:.5;text-decoration:line-through}
+.dead-role{font-size:.68rem;color:var(--danger);text-decoration:none}
+.notes-box{border-top:1px solid var(--border);padding-top:12px}
+.note{font-size:.76rem;border-radius:7px;padding:6px 9px;margin-bottom:5px;line-height:1.4}
+.note-ok{background:#05966922;border:1px solid var(--success);color:#a7f3d0}
+.note-danger{background:#f43f5e22;border:1px solid var(--danger);color:#fda4af}
+
+/* Tizim xabarlari turlari */
+.sys-death{color:#fda4af;font-style:normal;font-weight:600}
+.sys-save{color:#6ee7b7;font-style:normal;font-weight:600}
+.sys-secret{background:#7c5cff22;border:1px solid var(--accent);border-radius:8px;padding:7px 10px;color:#d8ccff;font-style:normal;font-weight:600}
+.sys-role{background:var(--bg-alt);border-radius:8px;padding:8px 11px;color:var(--text);font-style:normal;text-align:left}
+.sys-night{color:#c7d2fe;font-weight:600}
+.sys-round{color:#fde68a;font-weight:600}
+.sys-jester{background:#fbbf2422;border:1px solid var(--warning);border-radius:8px;padding:7px 10px;color:#fde68a;font-style:normal;font-weight:600}
+.sys-spywin{background:#f43f5e33;border:1px solid var(--danger);border-radius:8px;padding:7px 10px;color:#fda4af;font-style:normal;font-weight:600}
+
+/* Tun modali */
+#nightList{list-style:none;padding:0;margin:16px 0 12px;display:flex;flex-direction:column;gap:7px;max-height:300px;overflow-y:auto}
+#nightList li button{width:100%;padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--bg-alt);color:var(--text);cursor:pointer;font-size:.9rem}
+#nightList li button:hover{border-color:var(--accent)}
+.night-kill-btn{border-color:var(--danger)!important;background:#f43f5e22!important;color:#fda4af!important;font-weight:600}
+.night-sep{text-align:center;color:var(--text-dim);font-size:.72rem;padding:4px 0}
+
+/* Rol taqsimoti jadvali */
+.role-table-box{display:flex;flex-direction:column;gap:3px}
+.rt-row{display:flex;justify-content:space-between;background:var(--bg-alt);border-radius:7px;padding:5px 9px;font-size:.76rem}
+.rt-count{color:var(--text-dim)}
+.rt-roles{letter-spacing:1px}
+
+/* O'yin tugadi */
+.jester-win{background:#fbbf2422;border:1px solid var(--warning);border-radius:9px;padding:9px 11px;margin:12px 0;font-size:.83rem;color:#fde68a}
+.reveal-row{display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg-alt);border-radius:8px;margin-bottom:4px;font-size:.85rem}
+.reveal-role{color:var(--accent);font-weight:600}

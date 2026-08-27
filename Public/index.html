@@ -18,90 +18,56 @@
   </div>
 </div>
 
-<!-- ===================== ASOSIY MENU ===================== -->
+<!-- ===== BOSH MENU ===== -->
 <div id="main-menu" class="screen active">
   <div class="hero">
     <h1>🎮 Bosh Menu</h1>
     <p class="subtitle">Maroqli hordiq tilaymiz!!!</p>
-    <div class="online-pill">
-      <span class="online-dot"></span>
-      <span id="onlineCountText">Ulanmoqda...</span>
-    </div>
+    <div class="online-pill"><span class="online-dot"></span><span id="onlineCountText">Ulanmoqda...</span></div>
   </div>
   <div class="game-grid">
     <div class="game-card featured" id="goToImposter">
       <div class="game-card-icon">🕵️</div>
       <h3>Josusni top</h3>
-      <p>⚠️ Navbat bilan kalit so'zga bog'liq so'z ayting. Josusga so'z berilmaydi — uni fosh eting! KALIT SO'ZNI HECHKIMGA AYTMANG!</p>
+      <p>⚠️ Navbat bilan kalit so'zga bog'liq so'z ayting. Josus so'zni bilmaydi — uni fosh eting! Tunda maxsus rollar harakat qiladi.</p>
       <span class="play-tag">O'ynash ➡️</span>
     </div>
-    <div class="game-card disabled">
-      <div class="game-card-icon">⚙️</div>
-      <h3>Tez orada...</h3>
-      <p>Yangi o'yinlar tayyorlanmoqda</p>
-    </div>
-    <div class="game-card disabled">
-      <div class="game-card-icon">⚙️</div>
-      <h3>Tez orada...</h3>
-      <p>Yangi o'yinlar tayyorlanmoqda</p>
-    </div>
+    <div class="game-card disabled"><div class="game-card-icon">⚙️</div><h3>Tez orada...</h3><p>Yangi o'yinlar tayyorlanmoqda</p></div>
+    <div class="game-card disabled"><div class="game-card-icon">⚙️</div><h3>Tez orada...</h3><p>Yangi o'yinlar tayyorlanmoqda</p></div>
   </div>
 </div>
 
-<!-- ===================== IMPOSTER MENU ===================== -->
+<!-- ===== O'YIN MENU ===== -->
 <div id="imposter-menu" class="screen">
   <button class="back-btn" id="backToMainFromMenu">← Orqaga</button>
   <div class="menu-layout">
-
     <div class="panel form-panel">
       <h2>🕵️ Josusni top</h2>
       <p class="panel-desc">Xona yarating yoki mavjud xonaga qo'shiling</p>
-
-      <div class="field">
-        <label>Nickname</label>
-        <input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16">
-      </div>
-
-      <div class="field">
-        <label>Xona nomi (ixtiyoriy)</label>
-        <input type="text" id="roomNameInput" placeholder="Masalan: Do'stlar davrasi" maxlength="24">
-      </div>
-
-      <div class="field">
-        <label>Xona turi</label>
+      <div class="field"><label>Nickname</label><input type="text" id="nicknameInput" placeholder="Ismingiz..." maxlength="16"></div>
+      <div class="field"><label>Xona nomi (ixtiyoriy)</label><input type="text" id="roomNameInput" placeholder="Masalan: Do'stlar davrasi" maxlength="24"></div>
+      <div class="field"><label>Xona turi</label>
         <select id="roomVisibility">
           <option value="public">🌍 Ochiq — ro'yxatda ko'rinadi</option>
           <option value="private">🔒 Yopiq — faqat kod orqali</option>
         </select>
       </div>
-
-      <div class="action-block">
-        <button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button>
-      </div>
-
+      <div class="action-block"><button id="createLobbyBtn" class="btn btn-primary">➕ Xona yaratish</button></div>
       <div class="divider"><span>yoki kod bilan</span></div>
-
       <div class="action-block join-block">
         <input type="text" id="roomIdInput" placeholder="Xona kodi" maxlength="5">
         <button id="joinLobbyBtn" class="btn btn-secondary">🔑 Qo'shilish</button>
       </div>
     </div>
-
     <div class="panel browser-panel">
-      <div class="browser-head">
-        <h3 class="col-title">🌍 Ochiq xonalar</h3>
-        <button id="refreshRoomsBtn" class="icon-btn" title="Yangilash">🔄</button>
-      </div>
+      <div class="browser-head"><h3 class="col-title">🌍 Ochiq xonalar</h3><button id="refreshRoomsBtn" class="icon-btn" title="Yangilash">🔄</button></div>
       <p class="panel-desc small">Kodsiz to'g'ridan-to'g'ri qo'shiling</p>
-      <div id="publicRoomsList">
-        <p class="empty-note">Yuklanmoqda...</p>
-      </div>
+      <div id="publicRoomsList"><p class="empty-note">Yuklanmoqda...</p></div>
     </div>
-
   </div>
 </div>
 
-<!-- ===================== LOBBY ===================== -->
+<!-- ===== LOBBY ===== -->
 <div id="lobby-screen" class="screen">
   <div class="lobby-header">
     <h2>Xona kodi: <span id="roomIdDisplay">-----</span></h2>
@@ -116,7 +82,6 @@
     <div class="lobby-col">
       <h3 class="col-title">👥 O'yinchilar <span id="playerCountBadge" class="count-badge">0/10</span></h3>
       <ul id="playerList"></ul>
-
       <div class="lobby-actions">
         <button id="readyBtn" class="btn btn-secondary">✅ Tayyor</button>
         <button id="startGameBtn" class="btn btn-primary" style="display:none;">🚀 Boshlash</button>
@@ -124,93 +89,52 @@
 
       <div class="panel rules-panel">
         <div class="rules-header" id="rulesToggle">
-          <h3 class="col-title">📖 O'yin qoidalari va rollar</h3>
+          <h3 class="col-title">📖 Qoidalar va rollar</h3>
           <span id="rulesArrow" class="rules-arrow">▼</span>
         </div>
-
         <div id="rulesBody" class="rules-body">
-
           <div class="rules-section">
             <h4>🎯 Maqsad</h4>
-            <p>Barcha ishtirokchilarga bitta <b>maxfiy so'z</b> beriladi. Josus bu so'zni bilmaydi — u boshqalarning gaplariga qarab so'zni topishga va o'zini oshkor qilmaslikka harakat qiladi.</p>
+            <p>Barchaga bitta <b>maxfiy so'z</b> beriladi — faqat josus bilmaydi. Navbat bilan so'zga bog'liq so'z aytib, josusni toping.</p>
             <ul class="rules-list">
-              <li><b>Jamoa yutadi</b> — agar ovoz berish orqali josusni fosh etsangiz.</li>
-              <li><b>Josus yutadi</b> — agar tirik ishtirokchilar soni josuslar soniga tenglashsa.</li>
-              <li>Bitta xonada <b>3 tadan 9 tagacha</b> o'yinchi bo'ladi, josuslar soni <b>1 tadan 3 tagacha</b> (hostning sozlamasiga qarab).</li>
+              <li><b>Jamoa yutadi</b> — barcha josus va qotil yo'q qilinsa.</li>
+              <li><b>Josus yutadi</b> — ko'pchilikka aylansa, <b>yoki maxfiy so'zni chatda yozsa</b>.</li>
+              <li><b>Qotil yutadi</b> — yolg'iz omon qolsa.</li>
+              <li><b>Telba yutadi</b> — ovoz bilan chiqarilsa (o'yin davom etadi).</li>
             </ul>
           </div>
 
           <div class="rules-section">
-            <h4>🔄 O'yin qanday ketadi</h4>
+            <h4>🔄 Raund tartibi</h4>
             <ol class="rules-list">
-              <li><b>Navbat</b> — har bir o'yinchi o'z navbatida maxfiy so'zga bog'liq <b>bitta so'z</b> yozadi. Vaqtida ulgurmasangiz navbat o'tib ketadi.</li>
-              <li><b>Raund yakuni</b> — hamma gapirib bo'lgach ovoz berish ochiladi.</li>
-              <li><b>Ovoz berish</b> — istalgan tirik o'yinchi boshlashi mumkin. Eng ko'p ovoz olgan chiqariladi.</li>
-              <li><b>Ovozlar teng bo'lsa</b> — hech kim chiqarilmaydi, keyingi raund boshlanadi.</li>
+              <li>☀️ <b>Muhokama</b> — har kim navbat bilan bitta so'z aytadi.</li>
+              <li>🌙 <b>Tun</b> — maxsus rollar nishonini tanlaydi.</li>
+              <li>🗳️ <b>Ovoz berish</b> — eng ko'p ovoz olgan chiqariladi.</li>
             </ol>
-          </div>
-
-          <div class="rules-section">
-            <h4>⚠️ Muhim eslatmalar</h4>
-            <ul class="rules-list">
-              <li>Maxfiy so'zni <b>to'g'ridan-to'g'ri yozmang</b> — josus darrov bilib oladi!</li>
-              <li>Juda aniq so'z aytsangiz josusga yordam berasiz, juda umumiy aytsangiz o'zingizga shubha tushadi.</li>
-              <li>Reaksiya emojilari (👍 😂 🤔 😱 🧐) bilan boshqalarning so'zlariga munosabat bildiring.</li>
-            </ul>
           </div>
 
           <div class="rules-section">
             <h4>🚨 So'z oshkor bo'lishi</h4>
             <div class="reveal-rule-box">
-              <p><b>Agar ishtirokchi yoki detektiv maxfiy so'zni yozib yuborsa:</b></p>
+              <p><b>Ishtirokchi maxfiy so'zni yozib yuborsa:</b></p>
               <ul class="rules-list">
-                <li>Chatda hammaga <b>ogohlantirish</b> chiqadi.</li>
-                <li>Josusga maxfiy so'z <b>ochib beriladi</b> — endi u ham so'zni biladi!</li>
-                <li>Bu xabar o'yin tarixida ⚠️ belgisi bilan qoladi — kim aybdor ekani oxirida ko'rinadi.</li>
+                <li>Chatda ogohlantirish chiqadi.</li>
+                <li>Josusga so'z <b>ochib beriladi</b>!</li>
               </ul>
-              <p class="reveal-rule-note">📌 So'zning qo'shimchali shakli ham hisoblanadi: masalan so'z <b>"olma"</b> bo'lsa, <b>"olmalar"</b> yoki <b>"olmani"</b> deb yozish ham oshkor qilish sanaladi.</p>
-              <p class="reveal-rule-ok">✅ <b>Josus</b> maxfiy so'zni topib aytsa — hech narsa bo'lmaydi, ogohlantirish chiqmaydi. Bu uning maqsadi!</p>
+              <p class="reveal-rule-note">📌 Qo'shimchali shakl ham hisoblanadi: "olma" → "olmalar", "olmani".</p>
+              <p class="reveal-rule-ok">🎯 <b>Josus</b> so'zni topib chatga yozsa — josuslar darhol g'olib!</p>
             </div>
           </div>
 
           <div class="rules-section">
             <h4>🎭 Rollar</h4>
-
-            <div class="role-card role-card-crew">
-              <div class="role-card-head">👤 <b>Ishtirokchi</b></div>
-              <p>Maxfiy so'zni biladi. Vazifasi — so'zga bog'liq so'z aytib, o'zi ishtirokchi ekanini isbotlash va josusni topish.</p>
-            </div>
-
-            <div class="role-card role-card-imposter">
-              <div class="role-card-head">🕵️ <b>Josus</b></div>
-              <p>Maxfiy so'zni <b>bilmaydi</b>. Vazifasi — boshqalarning gaplaridan so'zni taxmin qilib, ishonarli so'z aytish va oxirigacha fosh bo'lmaslik.</p>
-            </div>
-
-            <div class="role-card role-card-detective">
-              <div class="role-card-head">🔍 <b>Detektiv</b></div>
-              <p>Maxfiy so'zni biladi (ishtirokchi kabi). Qo'shimcha imkoniyat: o'yin davomida <b>bir marta</b> istalgan o'yinchini tekshirib, uning josus yoki yo'qligini <b>maxfiy</b> bilib oladi. Natijani faqat o'zi ko'radi.</p>
-            </div>
-
-            <div class="role-card role-card-ghost">
-              <div class="role-card-head">👻 <b>Arvoh</b></div>
-              <p>Ovoz berishda chiqarilgan ishtirokchi arvohga aylanadi. Asosiy chatga yoza olmaydi va ovoz bera olmaydi, lekin hamma narsani ko'rib turadi va <b>boshqa arvohlar bilan maxfiy yozisha oladi</b>. Jamoasi yutsa, arvoh ham g'olib hisoblanadi!</p>
-            </div>
+            <div id="roleCardsBox"></div>
           </div>
 
           <div class="rules-section">
-            <h4>🏆 Yutuqlar</h4>
-            <div class="ach-grid">
-              <span><b>🎉 Birinchi g'alaba</b><em>Birinchi marta g'alaba qozonish</em></span>
-              <span><b>🕵️ Mohir josus</b><em>Josus sifatida yutish</em></span>
-              <span><b>🔍 Sherlock</b><em>Josusga to'g'ri ovoz berish</em></span>
-              <span><b>🛡️ Omon qolgan</b><em>Susdirilmasdan yutish</em></span>
-              <span><b>🔥 Uch karra</b><em>Ketma-ket 3 marta yutish</em></span>
-              <span><b>👻 Arvoh</b><em>Arvoh holida jamoang yutsa</em></span>
-              <span><b>🎖️ Detektiv ishi</b><em>Detektiv josusni tekshirsa</em></span>
-              <span><b>⭐ Faxriy</b><em>Xonada 5 ta o'yin o'ynash</em></span>
-            </div>
+            <h4>📋 Rol taqsimoti</h4>
+            <div id="roleTableBox" class="role-table-box"></div>
           </div>
-
         </div>
       </div>
     </div>
@@ -219,54 +143,24 @@
       <div class="panel settings-panel">
         <h3 class="col-title">⚙️ Xona sozlamalari</h3>
         <div id="hostOnlyNote" class="host-note">Faqat host o'zgartira oladi</div>
-
-        <div class="setting-row">
-          <label>Kategoriya</label>
-          <select id="setCategory" class="host-control"></select>
-        </div>
-        <div class="setting-row">
-          <label>Maksimal o'yinchilar</label>
-          <select id="setMaxPlayers" class="host-control">
-            <option value="3">3 kishi</option>
-            <option value="4">4 kishi</option>
-            <option value="5">5 kishi</option>
-            <option value="6">6 kishi</option>
-            <option value="7">7 kishi</option>
-            <option value="8">8 kishi</option>
-            <option value="9">9 kishi</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <label>Josuslar soni</label>
-          <select id="setImposterCount" class="host-control">
-            <option value="1">1 ta (3+ o'yinchi)</option>
-            <option value="2">2 ta (5+ o'yinchi)</option>
-            <option value="3">3 ta (7+ o'yinchi)</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <label>Detektiv roli</label>
-          <select id="setDetective" class="host-control">
-            <option value="true">Yoqilgan</option>
-            <option value="false">O'chirilgan</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <label>Navbat vaqti</label>
+        <div class="setting-row"><label>Kategoriya</label><select id="setCategory" class="host-control"></select></div>
+        <div class="setting-row"><label>Maksimal o'yinchilar</label><select id="setMaxPlayers" class="host-control"></select></div>
+        <div class="setting-row"><label>☀️ Navbat vaqti</label>
           <select id="setTurnSeconds" class="host-control">
-            <option value="15">15 soniya</option>
-            <option value="30">30 soniya</option>
-            <option value="45">45 soniya</option>
-            <option value="60">60 soniya</option>
+            <option value="15">15 soniya</option><option value="30">30 soniya</option>
+            <option value="45">45 soniya</option><option value="60">60 soniya</option>
           </select>
         </div>
-        <div class="setting-row">
-          <label>Ovoz berish vaqti</label>
+        <div class="setting-row"><label>🌙 Tun vaqti</label>
+          <select id="setNightSeconds" class="host-control">
+            <option value="15">15 soniya</option><option value="30">30 soniya</option>
+            <option value="45">45 soniya</option><option value="60">60 soniya</option>
+          </select>
+        </div>
+        <div class="setting-row"><label>🗳️ Ovoz berish vaqti</label>
           <select id="setVoteSeconds" class="host-control">
-            <option value="20">20 soniya</option>
-            <option value="30">30 soniya</option>
-            <option value="45">45 soniya</option>
-            <option value="60">60 soniya</option>
+            <option value="20">20 soniya</option><option value="30">30 soniya</option>
+            <option value="45">45 soniya</option><option value="60">60 soniya</option>
           </select>
         </div>
       </div>
@@ -279,59 +173,68 @@
   </div>
 </div>
 
-<!-- ===================== O'YIN EKRANI ===================== -->
+<!-- ===== O'YIN EKRANI ===== -->
 <div id="game-screen" class="screen">
   <div class="game-header">
     <div id="roleDisplay" class="role-badge">Rol yuklanmoqda...</div>
-    <div class="header-actions">
-      <button id="detectiveBtn" class="btn btn-secondary" style="display:none;">🔍 Tekshirish</button>
-      <button id="voteBtn" class="btn btn-danger" disabled>🗳️ Ovoz berish</button>
-    </div>
+    <div id="phaseBadge" class="phase-badge">☀️ Muhokama</div>
   </div>
 
   <div id="turnBanner" class="turn-banner">Raund boshlanmoqda...</div>
 
-  <div id="chatBox"></div>
-
-  <div class="chat-input-row">
-    <input type="text" id="messageInput" placeholder="Navbatingizni kuting..." disabled>
-    <button id="sendMessageBtn" class="btn btn-primary" disabled>Yuborish</button>
+  <div class="game-body">
+    <div class="game-main">
+      <div id="chatBox"></div>
+      <div class="chat-input-row">
+        <input type="text" id="messageInput" placeholder="Navbatingizni kuting..." disabled>
+        <button id="sendMessageBtn" class="btn btn-primary" disabled>Yuborish</button>
+      </div>
+    </div>
+    <div class="game-side">
+      <h4 class="side-title">👥 O'yinchilar</h4>
+      <ul id="livePlayerList"></ul>
+      <div id="notesBox" class="notes-box">
+        <h4 class="side-title">📓 Sizning ma'lumotlaringiz</h4>
+        <div id="notesContent"><p class="empty-note">Hali ma'lumot yo'q</p></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ===================== VOTE MODAL ===================== -->
+<!-- ===== TUN MODALI ===== -->
+<div id="nightModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 id="nightTitle">🌙 Tun</h3>
+    <p id="nightDesc" class="modal-sub"></p>
+    <p id="nightTimer" class="modal-sub"></p>
+    <ul id="nightList"></ul>
+    <button id="nightSkipBtn" class="btn btn-secondary">O'tkazib yuborish</button>
+  </div>
+</div>
+
+<!-- ===== OVOZ MODALI ===== -->
 <div id="voteModal" class="modal-overlay">
   <div class="modal-box">
-    <h3>Kimga ovoz berasiz?</h3>
+    <h3>🗳️ Kimga ovoz berasiz?</h3>
     <p id="voteTimer" class="modal-sub"></p>
     <ul id="voteList"></ul>
   </div>
 </div>
 
-<!-- ===================== DETEKTIV MODAL ===================== -->
-<div id="detectiveModal" class="modal-overlay">
-  <div class="modal-box">
-    <h3>🔍 Kimni tekshirasiz?</h3>
-    <p class="modal-sub">Bu qobiliyatdan faqat bir marta foydalana olasiz!</p>
-    <ul id="detectiveList"></ul>
-    <button id="detectiveCancelBtn" class="btn btn-secondary">Bekor qilish</button>
-  </div>
-</div>
-
-<!-- ===================== GAME OVER MODAL ===================== -->
+<!-- ===== O'YIN TUGADI ===== -->
 <div id="gameOverModal" class="modal-overlay">
   <div class="modal-box modal-wide">
     <h3 id="gameOverTitle">O'yin tugadi</h3>
     <p id="gameOverMessage"></p>
-    <div id="newAchievementsBox"></div>
-
+    <div id="jesterBox"></div>
     <div class="recap-tabs">
-      <button class="tab-btn active" data-tab="recap">📜 O'yin tarixi</button>
+      <button class="tab-btn active" data-tab="roles">🎭 Rollar</button>
+      <button class="tab-btn" data-tab="recap">📜 Tarix</button>
       <button class="tab-btn" data-tab="board">🏆 Reyting</button>
     </div>
-    <div id="recapContent" class="tab-content active"></div>
+    <div id="rolesContent" class="tab-content active"></div>
+    <div id="recapContent" class="tab-content"></div>
     <div id="boardContent" class="tab-content"></div>
-
     <button id="gameOverCloseBtn" class="btn btn-primary">Lobbyga qaytish</button>
   </div>
 </div>
