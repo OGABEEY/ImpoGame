@@ -109,6 +109,10 @@ function buildButtonRow(gameUrl) {
  *   DISCORD_CLIENT_ID - Developer Portal > General Information > Application ID
  *   GAME_URL          - o'yin manzili (masalan https://impostergame-9uy1.onrender.com)
  *
+ * Ixtiyoriy:
+ *   DISCORD_GUILD_ID  - server (guild) ID. Berilsa, buyruqlar faqat o'sha serverga
+ *                       DARHOL o'rnatiladi. Berilmasa — global (1 soatgacha kutish).
+ *
  * @param {Function} getStats - serverdan jonli statistika qaytaruvchi funksiya
  */
 function startDiscordBot(getStats) {
@@ -140,12 +144,27 @@ function startDiscordBot(getStats) {
 
     client.once(Events.ClientReady, async (c) => {
         console.log(`Discord bot ishga tushdi (${c.user.tag}).`);
+
+        const guildId = process.env.DISCORD_GUILD_ID;
         try {
             const rest = new REST({ version: '10' }).setToken(token);
-            await rest.put(Routes.applicationCommands(clientId), { body: commands });
-            console.log('Discord: slash buyruqlar ro\'yxatdan o\'tkazildi.');
+
+            if (guildId) {
+                // Bitta serverga — DARHOL ishlaydi (test uchun qulay)
+                await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
+                console.log(`Discord: buyruqlar ${guildId} serveriga darhol o'rnatildi.`);
+            } else {
+                // Global — barcha serverlarda, lekin 1 soatgacha kutish mumkin
+                await rest.put(Routes.applicationCommands(clientId), { body: commands });
+                console.log("Discord: global buyruqlar ro'yxatdan o'tkazildi (tarqalishi 1 soatgacha vaqt olishi mumkin).");
+            }
+
+            console.log(`Discord: bot ${c.guilds.cache.size} ta serverda.`);
         } catch (err) {
-            console.error('Discord: buyruqlarni ro\'yxatdan o\'tkazishda xato:', err.message);
+            console.error("Discord: buyruqlarni ro'yxatdan o'tkazishda xato:", err.message);
+            if (err.message && err.message.includes('Missing Access')) {
+                console.error("  → Bot 'applications.commands' ruxsatisiz qo'shilgan. OAuth2 URL'ni qayta yarating.");
+            }
         }
     });
 

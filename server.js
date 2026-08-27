@@ -336,6 +336,26 @@ function buildTurnOrder(room) {
         const j = Math.floor(Math.random() * (i + 1));
         [ids[i], ids[j]] = [ids[j], ids[i]];
     }
+
+    // Josus birinchi gapirmasligi kerak — aks holda u hech qanday ma'lumotsiz
+    // so'z o'ylab topishga majbur bo'ladi. Birinchi o'rinni josus egallagan bo'lsa,
+    // uni tasodifiy oddiy ishtirokchi bilan almashtiramiz.
+    const firstPlayer = room.players.get(ids[0]);
+    if (firstPlayer && firstPlayer.isImposter) {
+        const crewPositions = ids
+            .map((id, idx) => ({ id, idx }))
+            .filter(x => {
+                const p = room.players.get(x.id);
+                return p && !p.isImposter;
+            });
+
+        if (crewPositions.length > 0) {
+            const pick = crewPositions[Math.floor(Math.random() * crewPositions.length)];
+            [ids[0], ids[pick.idx]] = [ids[pick.idx], ids[0]];
+        }
+        // Agar oddiy ishtirokchi qolmagan bo'lsa (nazariy holat), tartib o'zgarishsiz qoladi
+    }
+
     room.turnOrder = ids;
     room.turnIndex = 0;
 }
