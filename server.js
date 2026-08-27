@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const { startTelegramBot } = require('./bot');
+const { startDiscordBot } = require('./discord-bot');
 
 const app = express();
 const server = http.createServer(app);
@@ -1002,7 +1003,9 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server ${PORT}-portda ishga tushdi`));
-startTelegramBot(() => {
+
+// Telegram va Discord botlari uchun umumiy jonli statistika
+function getLiveStats() {
     let waiting = 0;
     let inGame = 0;
     let playersInRooms = 0;
@@ -1018,4 +1021,7 @@ startTelegramBot(() => {
         inGameRooms: inGame,
         playersInRooms
     };
-});
+}
+
+startTelegramBot(getLiveStats);
+startDiscordBot(getLiveStats);
