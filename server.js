@@ -8,6 +8,75 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// ==================== TASHRIFLAR STATISTIKASI ====================
+// DIQQAT: bu ma'lumot server xotirasida saqlanadi. Render bepul tarifda
+// server qayta ishga tushsa (deploy yoki uzoq uyqu) hisob nolga qaytadi.
+const serverStartedAt = Date.now();
+const visitStats = {
+    totalVisits: 0,
+    allVisitors: new Set(),      // barcha vaqt uchun noyob tashrifchilar
+    peakOnline: 0,
+    totalGames: 0,
+    days: new Map()              // 'YYYY-MM-DD' -> { visits, visitors:Set, games, peakOnline }
+};
+
+function todayKey() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function getDayBucket(key = todayKey()) {
+    if (!visitStats.days.has(key)) {
+        visitStats.days.set(key, { visits: 0, visitors: new Set(), games: 0, peakOnline: 0 });
+    }
+    return visitStats.days.get(key);
+}
+
+function recordVisit(visitorId) {
+    visitStats.totalVisits++;
+    const day = getDayBucket();
+    day.visits++;
+    if (visitorId) {
+        visitStats.allVisitors.add(visitorId);
+        day.visitors.add(visitorId);
+    }
+}
+
+function recordPeakOnline(count) {
+    if (count > visitStats.peakOnline) visitStats.peakOnline = count;
+    const day = getDayBucket();
+    if (count > day.peakOnline) day.peakOnline = count;
+}
+
+function recordGamePlayed() {
+    visitStats.totalGames++;
+    getDayBucket().games++;
+}
+
+function buildStatsPayload() {
+    const days = Array.from(visitStats.days.entries())
+        .map(([date, d]) => ({
+            date, visits: d.visits, uniqueVisitors: d.visitors.size,
+            games: d.games, peakOnline: d.peakOnline
+        }))
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 30);
+
+    const today = getDayBucket();
+    return {
+        online: onlineCount,
+        activeRooms: rooms.size,
+        today: { visits: today.visits, uniqueVisitors: today.visitors.size, games: today.games, peakOnline: today.peakOnline },
+        allTime: {
+            visits: visitStats.totalVisits,
+            uniqueVisitors: visitStats.allVisitors.size,
+            games: visitStats.totalGames,
+            peakOnline: visitStats.peakOnline
+        },
+        serverUptimeSeconds: Math.floor((Date.now() - serverStartedAt) / 1000),
+        days
+    };
+}
+
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // Uptime xizmatlari (UptimeRobot, cron-job.org) shu manzilni ping qiladi.
@@ -19,6 +88,15 @@ app.get('/healthz', (req, res) => {
         rooms: rooms.size,
         uptime: Math.floor(process.uptime())
     });
+});
+
+// Statistika (himoyalangan). ADMIN_KEY environment variable'ini o'rnating.
+app.get('/stats.json', (req, res) => {
+    const key = process.env.ADMIN_KEY;
+    if (key && req.query.key !== key) {
+        return res.status(403).json({ error: "Ruxsat yo'q. ?key=... ni qo'shing." });
+    }
+    res.json(buildStatsPayload());
 });
 
 // ==================== SO'ZLAR (KATEGORIYALAR BO'YICHA) ====================
@@ -510,7 +588,16 @@ function tallyVotes(roomId) {
 io.on('connection', (socket) => {
 
     onlineCount++;
+    recordPeakOnline(onlineCount);
     broadcastOnlineCount();
+
+    // Klient sahifani ochganda bir marta yuboradi
+    socket.on('registerVisit', ({ visitorId }) => {
+        if (socket.data && socket.data.visitCounted) return;
+        socket.data = socket.data || {};
+        socket.data.visitCounted = true;
+        recordVisit(visitorId);
+    });
 
     socket.on('getOnlineCount', () => {
         socket.emit('onlineCount', { count: onlineCount, rooms: rooms.size });
@@ -726,6 +813,7 @@ io.on('connection', (socket) => {
             }
         });
 
+        recordGamePlayed();
         sendSystemMessage(roomId, `O'yin boshlandi! Kategoriya: ${CATEGORIES[catKey].name}. Navbat bilan so'z ayting.`);
         buildTurnOrder(room);
         startTurn(roomId);
@@ -914,4 +1002,20 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server ${PORT}-portda ishga tushdi`));
-startTelegramBot();
+startTelegramBot(() => {
+    let waiting = 0;
+    let inGame = 0;
+    let playersInRooms = 0;
+    rooms.forEach(room => {
+        playersInRooms += room.players.size;
+        if (room.started) inGame++;
+        else waiting++;
+    });
+    return {
+        online: onlineCount,
+        totalRooms: rooms.size,
+        waitingRooms: waiting,
+        inGameRooms: inGame,
+        playersInRooms
+    };
+});

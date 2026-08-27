@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistika — Josusni top</title>
+<style>
+:root{--bg:#0f1116;--panel:#1c2029;--bg-alt:#171a22;--border:#2a2f3a;--text:#eef0f4;--dim:#9aa1b1;--accent:#7c5cff;--accent2:#ff5c8a;--ok:#34d399;}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:radial-gradient(circle at top left,#1a1e2b,var(--bg) 60%);color:var(--text);min-height:100vh;padding:24px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:1.5rem;margin:0 0 4px}
+.sub{color:var(--dim);font-size:.85rem;margin-bottom:22px}
+.live{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--border);padding:5px 12px;border-radius:999px;font-size:.8rem;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:p 2s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 7px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+h2{font-size:1rem;margin:26px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.val{display:block;font-size:1.7rem;font-weight:700;color:var(--accent)}
+.lbl{font-size:.75rem;color:var(--dim)}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:.85rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--bg-alt);color:var(--dim);font-size:.75rem;font-weight:600}
+tr:last-child td{border-bottom:none}
+td.num{color:var(--accent);font-weight:600}
+.warn{background:#fbbf2415;border:1px solid #fbbf24;border-radius:10px;padding:11px 13px;font-size:.8rem;color:#fde68a;margin-top:24px;line-height:1.5}
+.err{background:#f43f5e22;border:1px solid #f43f5e;border-radius:10px;padding:14px;color:#fda4af}
+.keybox{margin-top:14px;display:flex;gap:8px}
+.keybox input{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--bg-alt);color:var(--text)}
+.keybox button{padding:10px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📊 Sayt statistikasi</h1>
+  <p class="sub">Josusni top — tashriflar va faollik</p>
+  <div class="live"><span class="dot"></span><span id="liveText">Yuklanmoqda...</span></div>
+
+  <div id="content"></div>
+
+  <div class="warn">
+    ⚠️ <b>Muhim:</b> bu ma'lumot server xotirasida saqlanadi. Render bepul tarifda server qayta ishga tushsa
+    (yangi deploy yoki uzoq harakatsizlik) hisob nolga qaytadi. Doimiy statistika uchun Google Analytics
+    yoki Cloudflare Web Analytics ulash kerak.
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+let key = params.get('key') || '';
+
+async function load(){
+  try{
+    const r = await fetch('/stats.json' + (key ? '?key='+encodeURIComponent(key) : ''));
+    const d = await r.json();
+    if(d.error){ showKeyPrompt(d.error); return; }
+    render(d);
+  }catch(e){
+    document.getElementById('content').innerHTML = '<div class="err">Ma\'lumot yuklanmadi: '+e.message+'</div>';
+  }
+}
+
+function showKeyPrompt(msg){
+  document.getElementById('liveText').textContent = 'Kirish yopiq';
+  document.getElementById('content').innerHTML =
+    '<div class="err">'+msg+'</div>' +
+    '<div class="keybox"><input id="k" type="password" placeholder="Admin kalitini kiriting"><button onclick="submitKey()">Kirish</button></div>';
+}
+function submitKey(){
+  key = document.getElementById('k').value.trim();
+  if(key) load();
+}
+
+function fmtUptime(s){
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h > 0 ? h+' soat '+m+' daq' : m+' daqiqa';
+}
+
+function render(d){
+  document.getElementById('liveText').textContent =
+    d.online + ' kishi hozir onlayn · ' + d.activeRooms + ' ta xona · server ' + fmtUptime(d.serverUptimeSeconds) + ' ishlayapti';
+
+  let html = '<h2>Bugun</h2><div class="grid">' +
+    card(d.today.visits,'Tashriflar') +
+    card(d.today.uniqueVisitors,'Noyob tashrifchi') +
+    card(d.today.games,"O'yinlar") +
+    card(d.today.peakOnline,'Eng ko\'p onlayn') +
+    '</div>';
+
+  html += '<h2>Server ishga tushganidan beri</h2><div class="grid">' +
+    card(d.allTime.visits,'Tashriflar') +
+    card(d.allTime.uniqueVisitors,'Noyob tashrifchi') +
+    card(d.allTime.games,"O'yinlar") +
+    card(d.allTime.peakOnline,'Rekord onlayn') +
+    '</div>';
+
+  html += '<h2>Kunlar bo\'yicha</h2>';
+  if(!d.days.length){ html += '<p class="sub">Hali ma\'lumot yo\'q</p>'; }
+  else{
+    html += '<table><tr><th>Sana</th><th>Tashriflar</th><th>Noyob</th><th>O\'yinlar</th><th>Peak onlayn</th></tr>';
+    d.days.forEach(x=>{
+      html += '<tr><td>'+x.date+'</td><td class="num">'+x.visits+'</td><td class="num">'+x.uniqueVisitors+
+              '</td><td class="num">'+x.games+'</td><td class="num">'+x.peakOnline+'</td></tr>';
+    });
+    html += '</table>';
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+function card(v,l){ return '<div class="card"><span class="val">'+v+'</span><span class="lbl">'+l+'</span></div>'; }
+
+load();
+setInterval(load, 10000);
+</script>
+</body>
+</html>

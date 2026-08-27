@@ -93,7 +93,20 @@ socket.on('onlineCount', ({ count, rooms: roomCount }) => {
   el.textContent = `${count} kishi onlayn${roomPart}`;
 });
 
-socket.on('connect', () => socket.emit('getOnlineCount'));
+// Noyob tashrifchi ID (brauzerда saqlanadi)
+function getVisitorId() {
+  let id = localStorage.getItem('imposter_visitor_id');
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : 'v_' + Math.random().toString(36).slice(2) + Date.now());
+    localStorage.setItem('imposter_visitor_id', id);
+  }
+  return id;
+}
+
+socket.on('connect', () => {
+  socket.emit('getOnlineCount');
+  socket.emit('registerVisit', { visitorId: getVisitorId() });
+});
 
 // ==================== OCHIQ XONALAR RO'YXATI ====================
 socket.on('publicRoomsUpdate', ({ rooms: list }) => {
